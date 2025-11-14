@@ -1,142 +1,133 @@
-import requests
-import csv
+"""
+Build a GeoJSON of WA EV charging stations with full EV unit detail
+from the NREL All Stations API.
+
+- Filters: electric only, state=WA, country=US, limit=all
+- Keeps:
+    * Station-level fields (name, address, connector types, counts, etc.)
+    * Nested ev_charging_units with connector-level power and port counts.
+
+You can serve this GeoJSON from your server and have the client
+filter by connector type, power_kW, etc.
+"""
+
+import os
 import json
-from io import StringIO
+import requests
 
-# -------------------------------
-# CONFIGURATION
-# -------------------------------
-API_KEY = "YOUR_KEY_HERE"
-STATE = "WA"
-ACCESS = "public"
-OUTPUT_FILE = "ev_charging_units.geojson"
-FORMAT = "geojson"
-RESPONSE_FORMAT = "compact"
-RESOURCE = "ev-charging-units"
-MIN_J3400 = 1
+API_KEY = os.getenv("NREL_API_KEY", "ZusbR2G0ugcJUeumHhtN4mNfu6KmlshMzJTdzLJ9")
 
+ALL_STATIONS_URL = "https://developer.nrel.gov/api/alt-fuel-stations/v1.json"
 
-def _find_key_case_insensitive(row, candidates):
-    """Return the first key from row that matches any candidate substring (case-insensitive)."""
-    lower_keys = {k.lower(): k for k in row.keys()}
-    for cand in candidates:
-        for lk, orig in lower_keys.items():
-            if cand.lower() in lk:
-                return orig
-    return None
-
-
-def csv_to_geojson(csv_text):
-    """Convert CSV text to a GeoJSON FeatureCollection.
-
-    Detects latitude/longitude field names (case-insensitive) and includes all other
-    fields as properties.
-    """
-    f = StringIO(csv_text)
-    reader = csv.DictReader(f)
-
-    features = []
-    for row in reader:
-        lat_key = _find_key_case_insensitive(row, ["latitude", "lat"])
-        lon_key = _find_key_case_insensitive(row, ["longitude", "lon", "lng"])
-        if not lat_key or not lon_key:
-            continue
-        try:
-            lat = float(row[lat_key])
-            lon = float(row[lon_key])
-        except Exception:
-            continue
-
-        props = {k: v for k, v in row.items() if k not in [lat_key, lon_key]}
-        features.append({
-            "type": "Feature",
-            "geometry": {"type": "Point", "coordinates": [lon, lat]},
-            "properties": props,
-        })
-
-    return {"type": "FeatureCollection", "features": features}
-
-
-def filter_geojson_j3400(feature_collection, min_count=1):
-    """Return a new FeatureCollection containing only features with EV J3400 Connector Count >= min_count.
-
-    This looks for a property name containing 'j3400' case-insensitively.
-    """
-    features = feature_collection.get("features", [])
-    if not features:
-        return {"type": "FeatureCollection", "features": []}
-
-    first_props = features[0].get("properties", {})
-    j3400_key = None
-    for k in first_props.keys():
-        if "j3400" in k.lower():
-            j3400_key = k
-            break
-
-    if j3400_key is None:
-        print("⚠️ Could not find a 'J3400' connector count property in features; returning empty collection.")
-        return {"type": "FeatureCollection", "features": []}
-
-    out = []
-    for feat in features:
-        props = feat.get("properties", {})
-        val = props.get(j3400_key, "0")
-        try:
-            num = int(float(val)) if val not in (None, "") else 0
-        except Exception:
-            num = 0
-        if num >= min_count:
-            out.append(feat)
-
-    return {"type": "FeatureCollection", "features": out}
-
-# -------------------------------
-# API REQUEST (GeoJSON output)
-# See: https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/all/#geojson-output-format
-# -------------------------------
-url = f"https://developer.nrel.gov/api/alt-fuel-stations/v1/{RESOURCE}.csv"
-params = {
+PARAMS = {
     "api_key": API_KEY,
-    "state": STATE,
-    "access": ACCESS,
+    "fuel_type": "ELEC",   # electric only
+    "state": "WA",         # Washington
+    "country": "US",       # explicit, default is US
+    "limit": "all",        # get all matching stations
+    # Optional refinements you can uncomment later:
+    # "access": "public",  # only public access
+    # "status": "E",       # only 'Available' stations
 }
 
-print(f"Requesting EV charging data (GeoJSON) for state={STATE} ...")
+OUTPUT = "wa_ev_stations_full_units.geojson"
 
 
-response = requests.get(url, params=params)
+def build_geojson():
+    print("Requesting WA EV stations from All Stations API...")
+    r = requests.get(ALL_STATIONS_URL, params=PARAMS, timeout=120)
+    r.raise_for_status()
+
+    data = r.json()
+    stations = data.get("fuel_stations", [])
+    print(f"Got {len(stations)} stations")
+
+    features = []
+
+    for s in stations:
+        lat = s.get("latitude")
+        lon = s.get("longitude")
+        if lat is None or lon is None:
+            continue  # skip if no coordinates
+
+        # ------- Build unit-level structure -------
+        units_out = []
+        for u in (s.get("ev_charging_units") or []):
+            # connectors is a record keyed by connector type
+            # e.g. {"J1772": {"power_kw": 7.2, "port_count": 2}, ...}
+            connectors_raw = u.get("connectors") or {}
+            connectors_out = []
+
+            # Flatten the connectors record into a list of objects
+            for c_type, c_info in connectors_raw.items():
+                connectors_out.append({
+                    "type": c_type,
+                    "power_kw": c_info.get("power_kw"),
+                    "port_count": c_info.get("port_count"),
+                })
+
+            units_out.append({
+                "network": u.get("network"),
+                "charging_level": u.get("charging_level"),
+                "port_count": u.get("port_count"),
+                "funding_sources": u.get("funding_sources"),
+                "connectors": connectors_out,
+            })
+
+        # ------- Station-level feature -------
+        feature = {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [lon, lat],
+            },
+            "properties": {
+                "id": s.get("id"),
+                "station_name": s.get("station_name"),
+                "fuel_type_code": s.get("fuel_type_code"),
+                "street_address": s.get("street_address"),
+                "city": s.get("city"),
+                "state": s.get("state"),
+                "zip": s.get("zip"),
+                "country": s.get("country"),
+                "status_code": s.get("status_code"),
+                "access_code": s.get("access_code"),
+                "access_detail_code": s.get("access_detail_code"),
+                "ev_network": s.get("ev_network"),
+                "ev_network_web": s.get("ev_network_web"),
+                "ev_pricing": s.get("ev_pricing"),
+                "ev_connector_types": s.get("ev_connector_types"),
+                "ev_level1_evse_num": s.get("ev_level1_evse_num"),
+                "ev_level2_evse_num": s.get("ev_level2_evse_num"),
+                "ev_dc_fast_num": s.get("ev_dc_fast_num"),
+                # Full unit details for filtering on the client:
+                "ev_charging_units": units_out,
+            },
+        }
+        features.append(feature)
+
+    geojson = {
+        "type": "FeatureCollection",
+        "features": features,
+    }
+
+    with open(OUTPUT, "w", encoding="utf-8") as f:
+        json.dump(geojson, f, separators=(",", ":"))
+
+    size_mb = os.path.getsize(OUTPUT) / (1024 * 1024)
+    print(f"Saved GeoJSON to {OUTPUT} ({size_mb:.2f} MB)")
 
 
-# -------------------------------
-# HANDLE RESPONSE
-# -------------------------------
-if response.status_code == 200:
+def main():
     try:
-        data = response.json()
-        if isinstance(data, dict) and data.get("type") == "FeatureCollection":
-            features = data.get("features", [])
-            filtered = filter_geojson_j3400(data, min_count=MIN_J3400)
-            with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-                json.dump(filtered, f, ensure_ascii=False, indent=2)
-            print(f"✅ GeoJSON saved successfully as '{OUTPUT_FILE}'. Features: {len(features)} -> {len(filtered.get('features', []))} (filtered)")
-        else:
-            with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-            print(f"⚠️ Received JSON but it is not a FeatureCollection. Saved raw JSON to '{OUTPUT_FILE}'.")
-    except ValueError:
-        try:
-            geo = csv_to_geojson(response.text)
-            filtered = filter_geojson_j3400(geo, min_count=MIN_J3400)
-            with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-                json.dump(filtered, f, ensure_ascii=False, indent=2)
-            print(f"✅ Converted CSV -> GeoJSON and saved to '{OUTPUT_FILE}'. Features: {len(geo.get('features', []))} -> {len(filtered.get('features', []))} (filtered)")
-        except Exception as e:
-            print("❌ Failed to convert CSV response to GeoJSON:", e)
-            print(response.text[:1000])
-else:
-    print(f"❌ Error: HTTP {response.status_code}")
-    print(response.text)
+        build_geojson()
+    except requests.HTTPError as e:
+        print("HTTP error:", e)
+        if e.response is not None:
+            print("Response snippet:", e.response.text[:1000])
+    except Exception as e:
+        print("Unexpected error:", e)
 
 
 if __name__ == "__main__":
-    print(f"Wrote output (if request succeeded) to: {OUTPUT_FILE}")
+    main()
