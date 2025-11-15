@@ -1,12 +1,18 @@
 import requests
 import json
+import sys
 
 API_KEY = "mt2MmRuURhgcr7iF3pa8egb4agavf9nX8cn840Ee"
 url = f"https://developer.nrel.gov/api/alt-fuel-stations/v1.json?api_key={API_KEY}&fuel_type=E85&limit=20000"
 
-response = requests.get(url)
-data = response.json()
+try:
+    response = requests.get(url)
+    response.raise_for_status()
+except requests.RequestException as e:
+    print(f"Failed to fetch E85 stations: {e}", file=sys.stderr)
+    sys.exit(1)
 
+data = response.json()
 features = []
 
 for s in data.get("fuel_stations", []):
@@ -38,4 +44,3 @@ with open("e85_stations.geojson", "w") as f:
     json.dump(geojson, f, indent=2)
 
 print("✔ E85 data cleaned and saved as e85_stations.geojson")
-
