@@ -1,0 +1,53 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.539,
+          47.10579
+        ]
+      },
+      "properties": {
+        "id": 102640,
+        "station_name": "Fort Lewis",
+        "street_address": "McKinley Ave & Garfield St",
+        "city": "Fort Lewis",
+        "state": "WA",
+        "zip": "98433",
+        "access_code": "private",
+        "status_code": "E",
+        "hy_pressure": null,
+        "hy_vehicle_class": null,
+        "hy_is_open": null,
+        "hy_station_status": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.747466,
+          45.83038
+        ]
+      },
+      "properties": {
+        "id": 361263,
+        "station_name": "FWS- Ridgefield NWR",
+        "street_address": "28908 NW Main Ave",
+        "city": "Ridgefield",
+        "state": "WA",
+        "zip": "98642",
+        "access_code": "private",
+        "status_code": "E",
+        "hy_pressure": null,
+        "hy_vehicle_class": null,
+        "hy_is_open": null,
+        "hy_station_status": null
+      }
+    }
+  ]
+}
