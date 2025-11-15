@@ -1,0 +1,580 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.369311,
+          47.66525
+        ]
+      },
+      "properties": {
+        "id": 21113,
+        "station_name": "Dr. Dan's Alternative Fuels Werks",
+        "fuel_type_code": "BD",
+        "street_address": "912 NW 50th St",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98107",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "public",
+        "access_detail_code": null,
+        "cards_accepted": "A Cash Checks D M V",
+        "bd_blends": "B99"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.664489,
+          45.662257
+        ]
+      },
+      "properties": {
+        "id": 29825,
+        "station_name": "Bonneville Power Administration",
+        "fuel_type_code": "BD",
+        "street_address": "5411 NE Highway 99",
+        "city": "Vancouver",
+        "state": "WA",
+        "zip": "98663",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "GOVERNMENT",
+        "cards_accepted": "Wright_Exp",
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.445212,
+          47.253205
+        ]
+      },
+      "properties": {
+        "id": 30353,
+        "station_name": "McChord Air Force Base",
+        "fuel_type_code": "BD",
+        "street_address": "930 Tacoma Ave S",
+        "city": "Tacoma",
+        "state": "WA",
+        "zip": "98438",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "GOVERNMENT",
+        "cards_accepted": "Wright_Exp",
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.6997705,
+          47.6973044
+        ]
+      },
+      "properties": {
+        "id": 34305,
+        "station_name": "Naval Base Kitsap Bangor - Defense Energy Support Center",
+        "fuel_type_code": "BD",
+        "street_address": "1204 Skate St",
+        "city": "Silverdale",
+        "state": "WA",
+        "zip": "98315",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "GOVERNMENT",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.647197,
+          47.561819
+        ]
+      },
+      "properties": {
+        "id": 41668,
+        "station_name": "Naval Base Kitsap - Bremerton",
+        "fuel_type_code": "BD",
+        "street_address": "1400 Farragut Ave",
+        "city": "Bremerton",
+        "state": "WA",
+        "zip": "98314",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "GOVERNMENT",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.987449,
+          47.868914
+        ]
+      },
+      "properties": {
+        "id": 44838,
+        "station_name": "Evergreen State Fairgrounds Station",
+        "fuel_type_code": "BD",
+        "street_address": "14405 179th Ave SE",
+        "city": "Monroe",
+        "state": "WA",
+        "zip": "98272",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": null,
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.376039,
+          47.5462
+        ]
+      },
+      "properties": {
+        "id": 48431,
+        "station_name": "Hans Foreign Car Repair",
+        "fuel_type_code": "BD",
+        "street_address": "6302 35th Ave SW",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98126",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "public",
+        "access_detail_code": null,
+        "cards_accepted": "A Cash Checks D M V",
+        "bd_blends": "B99"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.643483,
+          47.630788
+        ]
+      },
+      "properties": {
+        "id": 48486,
+        "station_name": "Fairchild Air Force Base",
+        "fuel_type_code": "BD",
+        "street_address": "7 W Arnold Ave",
+        "city": "Fairchild AFB",
+        "state": "WA",
+        "zip": "99011",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "GOVERNMENT",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.539,
+          47.10579
+        ]
+      },
+      "properties": {
+        "id": 62707,
+        "station_name": "Fort Lewis",
+        "fuel_type_code": "BD",
+        "street_address": "McKinley Ave & Garfield St",
+        "city": "Fort Lewis",
+        "state": "WA",
+        "zip": "98433",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "GOVERNMENT",
+        "cards_accepted": "Proprietor Wright_Exp",
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.3218664248535,
+          47.59502313436483
+        ]
+      },
+      "properties": {
+        "id": 76174,
+        "station_name": "City of Seattle - Charles Street",
+        "fuel_type_code": "BD",
+        "street_address": "1030 7th St S",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98134",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "FLEET",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.344791,
+          47.615865
+        ]
+      },
+      "properties": {
+        "id": 76175,
+        "station_name": "City of Seattle - Fire Station 02 Fuel",
+        "fuel_type_code": "BD",
+        "street_address": "2334 4th Ave",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98121",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "FLEET",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.355067,
+          47.631009
+        ]
+      },
+      "properties": {
+        "id": 76176,
+        "station_name": "City of Seattle - Fire Station 08 Fuel",
+        "fuel_type_code": "BD",
+        "street_address": "110 Lee St",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98109",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "FLEET",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.354436,
+          47.533682
+        ]
+      },
+      "properties": {
+        "id": 76177,
+        "station_name": "City of Seattle - Fire Station 11 Fuel",
+        "fuel_type_code": "BD",
+        "street_address": "1514 SW Holden St",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98106",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "FLEET",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.377453,
+          47.66869
+        ]
+      },
+      "properties": {
+        "id": 76179,
+        "station_name": "City of Seattle - Fire Station 18 Fuel",
+        "fuel_type_code": "BD",
+        "street_address": "1523 NW Market St",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98107",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "FLEET",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.276096,
+          47.548499
+        ]
+      },
+      "properties": {
+        "id": 76181,
+        "station_name": "City of Seattle - Fire Station 28 Fuel",
+        "fuel_type_code": "BD",
+        "street_address": "5968 Rainier Ave S",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98118",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "FLEET",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.388755,
+          47.584398
+        ]
+      },
+      "properties": {
+        "id": 76182,
+        "station_name": "City of Seattle - Fire Station 29 Fuel",
+        "fuel_type_code": "BD",
+        "street_address": "2139 Ferry Ave SW",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98116",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "FLEET",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.263287,
+          47.512707
+        ]
+      },
+      "properties": {
+        "id": 76184,
+        "station_name": "City of Seattle - Fire Station 33 Fuel",
+        "fuel_type_code": "BD",
+        "street_address": "9845 Renton Ave S",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98118",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "FLEET",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.291281,
+          47.62608
+        ]
+      },
+      "properties": {
+        "id": 76185,
+        "station_name": "City of Seattle - Fire Station 34 Fuel",
+        "fuel_type_code": "BD",
+        "street_address": "633 32nd Ave E",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98112",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "FLEET",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.332856,
+          47.533064
+        ]
+      },
+      "properties": {
+        "id": 76191,
+        "station_name": "City of Seattle - South Transfer Fuel",
+        "fuel_type_code": "BD",
+        "street_address": "130 S Kenyon St",
+        "city": "Seattle",
+        "state": "WA",
+        "zip": "98108",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "FLEET",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.213978,
+          47.988961
+        ]
+      },
+      "properties": {
+        "id": 86939,
+        "station_name": "Naval Station Everett",
+        "fuel_type_code": "BD",
+        "street_address": "2000 W Marine View Dr",
+        "city": "Everett",
+        "state": "WA",
+        "zip": "98207",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "GOVERNMENT",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.942976,
+          48.219247
+        ]
+      },
+      "properties": {
+        "id": 187460,
+        "station_name": "NAVRADSTA Jim Creek",
+        "fuel_type_code": "BD",
+        "street_address": "Jim Creek Rd",
+        "city": "Arlington",
+        "state": "WA",
+        "zip": "98223",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "GOVERNMENT",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.655552,
+          48.308914
+        ]
+      },
+      "properties": {
+        "id": 196614,
+        "station_name": "NPS PWRO - NOCA Stehekin Fuel Facility",
+        "fuel_type_code": "BD",
+        "street_address": "272 Golden W Dr",
+        "city": "Stehekin",
+        "state": "WA",
+        "zip": "98852",
+        "country": "US",
+        "status_code": "E",
+        "access_code": "private",
+        "access_detail_code": "GOVERNMENT",
+        "cards_accepted": null,
+        "bd_blends": "B20"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.91175,
+          46.32135
+        ]
+      },
+      "properties": {
+        "id": 316182,
+        "station_name": "Alliance AutoGas - Space Age Fuels",
+        "fuel_type_code": "BD",
+        "street_address": "9515 Old Pacfic Hwy",
+        "city": "Castle Rock",
+        "state": "WA",
+        "zip": "98611",
+        "country": "US",
+        "status_code": "T",
+        "access_code": "public",
+        "access_detail_code": null,
+        "cards_accepted": "A Cash CREDIT D Debit M V",
+        "bd_blends": "B20"
+      }
+    }
+  ]
+}
