@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Washington EV Charging Stations</title>
+    
+    <!-- Mapbox GL JS -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+        }
+        
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+        
+        .map-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 1;
+        }
+        
+        .map-overlay h2 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: #333;
+        }
+        
+        .map-overlay p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .mapboxgl-popup-content {
+            padding: 15px;
+            max-width: 300px;
+        }
+        
+        .mapboxgl-popup-content h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .mapboxgl-popup-content p {
+            margin: 5px 0;
+            font-size: 13px;
+        }
+        
+        .station-detail {
+            margin: 3px 0;
+            color: #555;
+        }
+        
+        .station-detail strong {
+            color: #222;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="map-overlay">
+        <h2>WA EV Charging Stations</h2>
+        <p id="station-count">Loading stations...</p>
+    </div>
+
+    <script>
+        // Replace with your Mapbox access token
+        mapboxgl.accessToken = 'pk.eyJ1IjoiamFlZGVuY2NhIiwiYSI6ImNtaGM4cDNxdDI3cHkya3B1emRxYzJuNWQifQ.GD3_Rhp6YQw5CkRSFClT0w';
+        
+        // Debug logging
+        console.log('Initializing map...');
+        
+        // Initialize the map
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [-120.5, 47.5], // Center on Washington State
+            zoom: 6.5
+        });
+        
+        map.on('style.load', () => {
+            console.log('Map style loaded');
+        });
+        
+        map.on('error', (e) => {
+            console.error('Map error:', e);
+            document.getElementById('station-count').textContent = 'Map error - check console';
+        });
+        
+        let allStations = null;
+        const MAX_STATIONS = 200;
+        
+        // Function to filter stations based on current map bounds and zoom
+        function getVisibleStations() {
+            if (!allStations) return null;
+            
+            const bounds = map.getBounds();
+            const zoom = map.getZoom();
+            
+            // Filter stations within current bounds
+            const stationsInBounds = allStations.features.filter(feature => {
+                const [lng, lat] = feature.geometry.coordinates;
+                return lng >= bounds.getWest() && 
+                       lng <= bounds.getEast() && 
+                       lat >= bounds.getSouth() && 
+                       lat <= bounds.getNorth();
+            });
+            
+            // If we have more than MAX_STATIONS, sample them
+            let sampled;
+            if (stationsInBounds.length > MAX_STATIONS) {
+                // Use spatial sampling - divide into grid and take samples
+                const step = Math.ceil(stationsInBounds.length / MAX_STATIONS);
+                sampled = stationsInBounds.filter((_, index) => index % step === 0)
+                    .slice(0, MAX_STATIONS);
+            } else {
+                sampled = stationsInBounds;
+            }
+            
+            return {
+                type: 'FeatureCollection',
+                features: sampled
+            };
+        }
+        
+        // Function to update the map data
+        function updateMapData() {
+            const visibleData = getVisibleStations();
+            if (visibleData && map.getSource('ev-stations')) {
+                map.getSource('ev-stations').setData(visibleData);
+                document.getElementById('station-count').textContent = 
+                    `${visibleData.features.length} of ${allStations.features.length} stations displayed`;
+            }
+        }
+        
+        map.on('load', () => {
+            console.log('Map loaded, fetching GeoJSON...');
+            document.getElementById('station-count').textContent = 'Fetching data...';
+            
+            // Load the GeoJSON data
+            fetch('assets/wa_ev_stations_full_units.geojson')
+                .then(response => {
+                    console.log('Fetch response:', response.ok, response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('GeoJSON loaded, features:', data.features ? data.features.length : 'no features');
+                    
+                    if (!data || !data.features || !Array.isArray(data.features)) {
+                        throw new Error('Invalid GeoJSON data structure');
+                    }
+                    
+                    allStations = data;
+                    console.log('Stations stored, getting visible stations...');
+                    
+                    // Get initial visible stations
+                    const initialData = getVisibleStations();
+                    console.log('Initial visible stations:', initialData ? initialData.features.length : 'null');
+                    
+                    if (!initialData) {
+                        throw new Error('Failed to filter visible stations');
+                    }
+                    
+                    // Update station count
+                    document.getElementById('station-count').textContent = 
+                        `${initialData.features.length} of ${allStations.features.length} stations displayed`;
+                    
+                    console.log('Adding source to map...');
+                    // Add the data source with initial filtered data
+                    map.addSource('ev-stations', {
+                        type: 'geojson',
+                        data: initialData,
+                        cluster: true,
+                        clusterMaxZoom: 14,
+                        clusterRadius: 50
+                    });
+                    console.log('Source added successfully');
+                    
+                    // Add cluster circle layer
+                    map.addLayer({
+                        id: 'clusters',
+                        type: 'circle',
+                        source: 'ev-stations',
+                        filter: ['has', 'point_count'],
+                        paint: {
+                            'circle-color': [
+                                'step',
+                                ['get', 'point_count'],
+                                '#51bbd6',
+                                10,
+                                '#f1f075',
+                                30,
+                                '#f28cb1'
+                            ],
+                            'circle-radius': [
+                                'step',
+                                ['get', 'point_count'],
+                                20,
+                                10,
+                                30,
+                                30,
+                                40
+                            ]
+                        }
+                    });
+                    
+                    // Add cluster count labels
+                    map.addLayer({
+                        id: 'cluster-count',
+                        type: 'symbol',
+                        source: 'ev-stations',
+                        filter: ['has', 'point_count'],
+                        layout: {
+                            'text-field': '{point_count_abbreviated}',
+                            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+                            'text-size': 12
+                        }
+                    });
+                    
+                    // Add individual points layer
+                    map.addLayer({
+                        id: 'unclustered-point',
+                        type: 'circle',
+                        source: 'ev-stations',
+                        filter: ['!', ['has', 'point_count']],
+                        paint: {
+                            'circle-color': '#11b4da',
+                            'circle-radius': 8,
+                            'circle-stroke-width': 2,
+                            'circle-stroke-color': '#fff'
+                        }
+                    });
+                    
+                    // Click event for clusters
+                    map.on('click', 'clusters', (e) => {
+                        const features = map.queryRenderedFeatures(e.point, {
+                            layers: ['clusters']
+                        });
+                        const clusterId = features[0].properties.cluster_id;
+                        map.getSource('ev-stations').getClusterExpansionZoom(
+                            clusterId,
+                            (err, zoom) => {
+                                if (err) return;
+                                
+                                map.easeTo({
+                                    center: features[0].geometry.coordinates,
+                                    zoom: zoom
+                                });
+                            }
+                        );
+                    });
+                    
+                    // Click event for individual stations
+                    map.on('click', 'unclustered-point', (e) => {
+                        const coordinates = e.features[0].geometry.coordinates.slice();
+                        const props = e.features[0].properties;
+                        
+                        // Ensure that if the map is zoomed out such that multiple
+                        // copies of the feature are visible, the popup appears
+                        // over the copy being pointed to.
+                        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                        }
+                        
+                        // Create popup content
+                        let popupContent = `
+                            <h3>${props.station_name}</h3>
+                            <div class="station-detail"><strong>Address:</strong> ${props.street_address}, ${props.city}, ${props.state} ${props.zip}</div>
+                            <div class="station-detail"><strong>Status:</strong> ${props.status_code === 'E' ? 'Available' : 'Unknown'}</div>
+                            <div class="station-detail"><strong>Access:</strong> ${props.access_code}</div>
+                        `;
+                        
+                        if (props.ev_network && props.ev_network !== 'Non-Networked') {
+                            popupContent += `<div class="station-detail"><strong>Network:</strong> ${props.ev_network}</div>`;
+                        }
+                        
+                        if (props.ev_level2_evse_num) {
+                            popupContent += `<div class="station-detail"><strong>Level 2 Ports:</strong> ${props.ev_level2_evse_num}</div>`;
+                        }
+                        
+                        if (props.ev_dc_fast_num) {
+                            popupContent += `<div class="station-detail"><strong>DC Fast Ports:</strong> ${props.ev_dc_fast_num}</div>`;
+                        }
+                        
+                        if (props.ev_pricing) {
+                            popupContent += `<div class="station-detail"><strong>Pricing:</strong> ${props.ev_pricing}</div>`;
+                        }
+                        
+                        new mapboxgl.Popup()
+                            .setLngLat(coordinates)
+                            .setHTML(popupContent)
+                            .addTo(map);
+                    });
+                    
+                    // Change cursor on hover
+                    map.on('mouseenter', 'clusters', () => {
+                        map.getCanvas().style.cursor = 'pointer';
+                    });
+                    map.on('mouseleave', 'clusters', () => {
+                        map.getCanvas().style.cursor = '';
+                    });
+                    map.on('mouseenter', 'unclustered-point', () => {
+                        map.getCanvas().style.cursor = 'pointer';
+                    });
+                    map.on('mouseleave', 'unclustered-point', () => {
+                        map.getCanvas().style.cursor = '';
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading GeoJSON data:', error);
+                    document.getElementById('station-count').textContent = 
+                        `Error: ${error.message}`;
+                });
+        });
+        
+        // Update data when map moves or zooms
+        map.on('moveend', updateMapData);
+        map.on('zoomend', updateMapData);
+        
+        // Add navigation controls
+        map.addControl(new mapboxgl.NavigationControl());
+    </script>
+</body>
+</html>
