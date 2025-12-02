@@ -4,9 +4,9 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
 }).addTo(map);
 
-// Marker icons
+// Marker icons, only ev so far, NEED icons for others, just copy this format ...
 const evIcon = L.icon({
-  iconUrl: "/assets/charging-station.png",
+  iconUrl: "./assets/charging-station.png",
   iconSize: [35, 35],
   iconAnchor: [17, 35],
   popupAnchor: [0, -30],
@@ -33,7 +33,7 @@ const fuelFiles = {
 const layers = {};
 const markersByFuel = {};
 
-// User location (as [lng, lat])
+// initialize user location (as [lng, lat])
 let userLocation = null;
 
 // Helper: create popup content from feature properties
@@ -133,7 +133,7 @@ async function geocode(query) {
 // Bring up results sorted by distance for currently visible fuel selection
 function showSortedResults() {
   if (!userLocation) {
-    alert('No user location available. Click "Use my location" or enter an address and click Find.');
+    alert('No user location available. Click "Use my location" or enter an address to find stations near you.');
     return;
   }
 
@@ -192,7 +192,7 @@ locateBtn.addEventListener('click', () => {
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
     userLocation = [lng, lat];
-    L.marker([lat, lng]).addTo(map).bindPopup('You are here').openPopup();
+    L.marker([lat, lng]).addTo(map).bindPopup('Your current location').openPopup();
     map.setView([lat, lng], 13);
     locateBtn.disabled = false;
     locateBtn.textContent = 'Use my location';
@@ -208,7 +208,7 @@ locateBtn.addEventListener('click', () => {
 
 geocodeBtn.addEventListener('click', async () => {
   const q = addressInput.value.trim();
-  if (!q) return alert('Please enter an address to search');
+  if (!q) return alert('Please enter an address to search nearby stations.');
   geocodeBtn.disabled = true;
   geocodeBtn.textContent = 'Searching...';
   try {
@@ -237,6 +237,6 @@ map.on('locationfound', (e) => {
   // only show if userLocation not set by UI
   if (!userLocation) {
     userLocation = [e.latlng.lng, e.latlng.lat];
-    L.marker(e.latlng).addTo(map).bindPopup('You are here');
+    L.marker(e.latlng).addTo(map).bindPopup('Your current location');
   }
 });
