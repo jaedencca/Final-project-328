@@ -1,13 +1,22 @@
 const map = L.map("map").setView([47.6062, -122.3321], 10);
 
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-}).addTo(map);
+// Replace with your Mapbox access token
+const MAPBOX_TOKEN = "pk.eyJ1IjoiamFlZGVuY2NhIiwiYSI6ImNtaGM4cDNxdDI3cHkya3B1emRxYzJuNWQifQ.GD3_Rhp6YQw5CkRSFClT0w";
+L.tileLayer(
+  `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`,
+  {
+    maxZoom: 19,
+    attribution:
+      'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+      '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+      'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+  }
+).addTo(map);
 
 // Marker icons, only ev so far, NEED icons for others, just copy this format ...
 const evIcon = L.icon({
   iconUrl: "./assets/charging-station.png",
-  iconSize: [35, 35],
+  iconSize: [50, 50],
   iconAnchor: [17, 35],
   popupAnchor: [0, -30],
 });
