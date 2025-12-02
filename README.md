@@ -39,3 +39,13 @@ The website will include **filters for distance, connector size, and connector c
 
 ### Vehicle Selection  
 Users will be able to **select their vehicle** if they are unsure which filters to use. The system will automatically **update the filters** to match the vehicle’s fueling requirements.  
+
+## How to use the map filter and distance sorting
+
+- Use the "All fuel type" dropdown to choose between All, Electric (EV), Hydrogen, and Biodiesel.
+- Click "Use my location" to allow the browser to use your GPS, or enter an address and click "Find" to set a search location.
+- Click "Sort by distance" to compute distances from your chosen location to the VISIBLE stations. A
+Notes:
+
+- The sort by diistance calculations use Turf.js.
+
