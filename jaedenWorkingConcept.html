@@ -9,6 +9,9 @@
     <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
     
+    <!-- Turf.js -->
+    <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+    
     <style>
         * {
             margin: 0;
@@ -22,32 +25,241 @@
         
         #map {
             position: absolute;
-            top: 0;
+            top: 50px;
             bottom: 0;
             width: 100%;
         }
         
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: rgba(35, 55, 75, 0.95);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+        }
+        
+        .filter-toggle {
+            background: transparent;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 3px;
+            transition: background 0.3s;
+        }
+        
+        .filter-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .filter-arrow {
+            transition: transform 0.3s;
+            font-size: 14px;
+        }
+        
+        .filter-arrow.open {
+            transform: rotate(90deg);
+        }
+        
         .map-overlay {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            background: white;
+            top: 60px;
+            left: 10px;
+            background: rgba(35, 55, 75, 0.95);
+            color: white;
             padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            z-index: 1;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            z-index: 9;
+            min-width: 280px;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        
+        .map-overlay.collapsed {
+            transform: translateX(-350px);
+            opacity: 0;
+            pointer-events: none;
         }
         
         .map-overlay h2 {
             margin: 0 0 10px 0;
             font-size: 18px;
-            color: #333;
+            color: #fff;
         }
         
-        .map-overlay p {
-            margin: 5px 0;
+        .map-overlay h3 {
+            margin: 15px 0 8px 0;
             font-size: 14px;
+            color: #aaa;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+        
+        .filter-group {
+            margin-bottom: 6px;
+        }
+        
+        .filter-group label {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: #e0e0e0;
+            cursor: pointer;
+            padding: 3px 0;
+        }
+        
+        .filter-group label:hover {
+            color: #fff;
+        }
+        
+        .filter-group input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .apply-filters-btn {
+            margin-top: 15px;
+            width: 100%;
+            padding: 10px;
+            background: #11b4da;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .apply-filters-btn:hover {
+            background: #0e8fb0;
+        }
+        
+        .search-container {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 2;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .search-container input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 14px;
+            width: 250px;
+        }
+        
+        .search-container button {
+            padding: 8px 16px;
+            background: #11b4da;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .search-container button:hover {
+            background: #0e8fb0;
+        }
+        
+        .location-btn {
+            padding: 8px 12px !important;
+            background: #4CAF50 !important;
+            min-width: auto !important;
+        }
+        
+        .location-btn:hover {
+            background: #45a049 !important;
+        }
+        
+        .results-panel {
+            position: absolute;
+            top: 120px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 2;
+            width: 320px;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .results-panel.active {
+            display: block;
+        }
+        
+        .results-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #333;
+            border-bottom: 2px solid #11b4da;
+            padding-bottom: 8px;
+        }
+        
+        .result-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .result-item:hover {
+            background: #f5f5f5;
+        }
+        
+        .result-item .station-name {
+            font-weight: bold;
+            color: #11b4da;
+            margin-bottom: 4px;
+        }
+        
+        .result-item .station-address {
+            font-size: 12px;
             color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .result-item .station-distance {
+            font-size: 12px;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .close-results {
+            float: right;
+            cursor: pointer;
+            color: #999;
+            font-size: 20px;
+            line-height: 16px;
+            font-weight: bold;
+        }
+        
+        .close-results:hover {
+            color: #333;
         }
         
         .mapboxgl-popup-content {
@@ -73,204 +285,727 @@
         .station-detail strong {
             color: #222;
         }
+        
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 10px;
+            background: white;
+            padding: 12px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 1;
+            font-size: 13px;
+        }
+        
+        .map-legend h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 1px #999;
+        }
     </style>
 </head>
 <body>
+    <div class="top-bar">
+        <button class="filter-toggle" id="filter-toggle">
+            <span class="filter-arrow" id="filter-arrow">▶</span>
+            <span>Filters</span>
+        </button>
+    </div>
+    
     <div id="map"></div>
     
-    <div class="map-overlay">
-        <h2>WA EV Charging Stations</h2>
-        <p id="station-count">Loading stations...</p>
+    <div class="search-container">
+        <input type="text" id="location-search" placeholder="Search location..." />
+        <button id="search-btn">Find Nearest</button>
+        <button id="location-btn" class="location-btn" title="Use My Location">📍</button>
+    </div>
+    
+    <div class="results-panel" id="results-panel">
+        <h3>
+            Nearest Stations
+            <span class="close-results" id="close-results">&times;</span>
+        </h3>
+        <div id="results-list"></div>
+    </div>
+    
+    <div class="map-legend">
+        <h4>Charging Level</h4>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #9333ea;"></div>
+            <span>DC Fast Charging</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #3b82f6;"></div>
+            <span>Level 2</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #22c55e;"></div>
+            <span>Level 1</span>
+        </div>
+    </div>
+    
+    <div class="map-overlay collapsed" id="filter-panel">
+        <h2>Filter Stations</h2>
+        
+        <h3>Charging Level</h3>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-dc-fast" checked>
+                DC Fast Charging
+            </label>
+        </div>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-level2" checked>
+                Level 2 Charging
+            </label>
+        </div>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-level1" checked>
+                Level 1 Charging
+            </label>
+        </div>
+        
+        <h3>Access Type</h3>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-public" checked>
+                Public Access
+            </label>
+        </div>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-private" checked>
+                Private Access
+            </label>
+        </div>
+        
+        <h3>Status</h3>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-available" checked>
+                Available (E)
+            </label>
+        </div>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-planned" checked>
+                Planned (P)
+            </label>
+        </div>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-temp-unavail" checked>
+                Temporarily Unavailable (T)
+            </label>
+        </div>
+        
+        <h3>Connector Type</h3>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-j1772" checked>
+                J1772 (Standard)
+            </label>
+        </div>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-j1772combo" checked>
+                J1772 Combo (CCS)
+            </label>
+        </div>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-tesla" checked>
+                Tesla
+            </label>
+        </div>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-chademo" checked>
+                CHAdeMO
+            </label>
+        </div>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="filter-j3271" checked>
+                J3271 (NACS)
+            </label>
+        </div>
+        
+        <button class="apply-filters-btn" id="apply-filters-btn">Apply Filters</button>
     </div>
 
     <script>
         // Replace with your Mapbox access token
         mapboxgl.accessToken = 'pk.eyJ1IjoiamFlZGVuY2NhIiwiYSI6ImNtaGM4cDNxdDI3cHkya3B1emRxYzJuNWQifQ.GD3_Rhp6YQw5CkRSFClT0w';
         
-        // Debug logging
-        console.log('Initializing map...');
-        
         // Initialize the map
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/streets-v12',
+            style: 'mapbox://styles/mapbox/light-v11',
             center: [-120.5, 47.5], // Center on Washington State
             zoom: 6.5
         });
         
-        map.on('style.load', () => {
-            console.log('Map style loaded');
+        // Toggle filter panel
+        document.getElementById('filter-toggle').addEventListener('click', () => {
+            const panel = document.getElementById('filter-panel');
+            const arrow = document.getElementById('filter-arrow');
+            panel.classList.toggle('collapsed');
+            arrow.classList.toggle('open');
         });
         
-        map.on('error', (e) => {
-            console.error('Map error:', e);
-            document.getElementById('station-count').textContent = 'Map error - check console';
-        });
+        let allData = null;
+        let searchMarker = null;
+        let lastSearchLocation = null; // Track last search location for re-filtering
         
-        let allStations = null;
-        const MAX_STATIONS = 200;
+        // Calculate distance using Turf.js (returns distance in miles)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const from = turf.point([lon1, lat1]);
+            const to = turf.point([lon2, lat2]);
+            const distance = turf.distance(from, to, {units: 'miles'});
+            return distance;
+        }
         
-        // Function to filter stations based on current map bounds and zoom
-        function getVisibleStations() {
-            if (!allStations) return null;
+        // Get user's current location and find nearest stations
+        function useCurrentLocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser');
+                return;
+            }
             
-            const bounds = map.getBounds();
-            const zoom = map.getZoom();
+            if (!allData) {
+                alert('Station data not loaded yet');
+                return;
+            }
             
-            // Filter stations within current bounds
-            const stationsInBounds = allStations.features.filter(feature => {
-                const [lng, lat] = feature.geometry.coordinates;
-                return lng >= bounds.getWest() && 
-                       lng <= bounds.getEast() && 
-                       lat >= bounds.getSouth() && 
-                       lat <= bounds.getNorth();
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const currentLat = position.coords.latitude;
+                    const currentLng = position.coords.longitude;
+                    
+                    // Store search location for filter updates
+                    lastSearchLocation = { lng: currentLng, lat: currentLat, placeName: 'Current Location' };
+                    
+                    // Remove previous search marker if exists
+                    if (searchMarker) {
+                        searchMarker.remove();
+                    }
+                    
+                    // Add marker for current location
+                    searchMarker = new mapboxgl.Marker({ color: '#ff0000' })
+                        .setLngLat([currentLng, currentLat])
+                        .setPopup(new mapboxgl.Popup().setHTML(`<h3>Your Location</h3>`))
+                        .addTo(map);
+                    
+                    // Get current filter settings
+                    const showDCFast = document.getElementById('filter-dc-fast').checked;
+                    const showLevel2 = document.getElementById('filter-level2').checked;
+                    const showLevel1 = document.getElementById('filter-level1').checked;
+                    const showPublic = document.getElementById('filter-public').checked;
+                    const showPrivate = document.getElementById('filter-private').checked;
+                    const showAvailable = document.getElementById('filter-available').checked;
+                    const showPlanned = document.getElementById('filter-planned').checked;
+                    const showTempUnavail = document.getElementById('filter-temp-unavail').checked;
+                    const showJ1772 = document.getElementById('filter-j1772').checked;
+                    const showJ1772Combo = document.getElementById('filter-j1772combo').checked;
+                    const showTesla = document.getElementById('filter-tesla').checked;
+                    const showChademo = document.getElementById('filter-chademo').checked;
+                    const showJ3271 = document.getElementById('filter-j3271').checked;
+                    
+                    // Filter stations based on current filter settings
+                    const filteredFeatures = allData.features.filter(feature => {
+                        const props = feature.properties;
+                        
+                        const hasChargingLevel = (showDCFast && props.ev_dc_fast_num > 0) ||
+                                                (showLevel2 && props.ev_level2_evse_num > 0) ||
+                                                (showLevel1 && props.ev_level1_evse_num > 0);
+                        if (!hasChargingLevel) return false;
+                        
+                        const accessCode = props.access_code || '';
+                        const hasAccess = (showPublic && accessCode === 'public') ||
+                                         (showPrivate && accessCode === 'private');
+                        if (!hasAccess) return false;
+                        
+                        const statusCode = props.status_code || '';
+                        const hasStatus = (showAvailable && statusCode === 'E') ||
+                                         (showPlanned && statusCode === 'P') ||
+                                         (showTempUnavail && statusCode === 'T');
+                        if (!hasStatus) return false;
+                        
+                        let connectorTypes = props.ev_connector_types;
+                        if (typeof connectorTypes === 'string') {
+                            try {
+                                connectorTypes = JSON.parse(connectorTypes);
+                            } catch (e) {
+                                connectorTypes = [];
+                            }
+                        }
+                        if (!Array.isArray(connectorTypes)) connectorTypes = [];
+                        
+                        const hasConnector = (showJ1772 && connectorTypes.includes('J1772')) ||
+                                            (showJ1772Combo && connectorTypes.includes('J1772COMBO')) ||
+                                            (showTesla && connectorTypes.includes('TESLA')) ||
+                                            (showChademo && connectorTypes.includes('CHADEMO')) ||
+                                            (showJ3271 && connectorTypes.includes('J3271'));
+                        
+                        return hasConnector;
+                    });
+                    
+                    const stationsWithDistance = filteredFeatures.map(feature => {
+                        const [lng, lat] = feature.geometry.coordinates;
+                        const distance = calculateDistance(currentLat, currentLng, lat, lng);
+                        return {
+                            feature: feature,
+                            distance: distance
+                        };
+                    }).sort((a, b) => a.distance - b.distance);
+                    
+                    const nearest10 = stationsWithDistance.slice(0, 10);
+                    displayResults(nearest10, currentLat, currentLng);
+                    
+                    map.flyTo({
+                        center: [currentLng, currentLat],
+                        zoom: 11,
+                        essential: true
+                    });
+                },
+                (error) => {
+                    let errorMsg = 'Unable to retrieve your location';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = 'Location access denied. Please enable location permissions.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = 'Location information unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = 'Location request timed out.';
+                            break;
+                    }
+                    alert(errorMsg);
+                }
+            );
+        }
+        
+        // Geocode location and find nearest stations
+        async function searchNearestStations() {
+            const searchInput = document.getElementById('location-search').value.trim();
+            if (!searchInput) {
+                alert('Please enter a location');
+                return;
+            }
+            
+            if (!allData) {
+                alert('Station data not loaded yet');
+                return;
+            }
+            
+            try {
+                // Geocode the search query (restricted to Washington state)
+                const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchInput)}.json?access_token=${mapboxgl.accessToken}&limit=1&country=US&bbox=-124.848974,45.543541,-116.915989,49.002494&proximity=-120.5,47.5`;
+                const response = await fetch(geocodeUrl);
+                const data = await response.json();
+                
+                if (!data.features || data.features.length === 0) {
+                    alert('Location not found. Please try a different search.');
+                    return;
+                }
+                
+                const searchLocation = data.features[0];
+                const [searchLng, searchLat] = searchLocation.center;
+                
+                // Store search location for filter updates
+                lastSearchLocation = { lng: searchLng, lat: searchLat, placeName: searchLocation.place_name };
+                
+                // Remove previous search marker if exists
+                if (searchMarker) {
+                    searchMarker.remove();
+                }
+                
+                // Add marker for searched location
+                searchMarker = new mapboxgl.Marker({ color: '#ff0000' })
+                    .setLngLat([searchLng, searchLat])
+                    .setPopup(new mapboxgl.Popup().setHTML(`<h3>Search Location</h3><p>${searchLocation.place_name}</p>`))
+                    .addTo(map);
+                
+                // Get current filter settings
+                const showDCFast = document.getElementById('filter-dc-fast').checked;
+                const showLevel2 = document.getElementById('filter-level2').checked;
+                const showLevel1 = document.getElementById('filter-level1').checked;
+                const showPublic = document.getElementById('filter-public').checked;
+                const showPrivate = document.getElementById('filter-private').checked;
+                const showAvailable = document.getElementById('filter-available').checked;
+                const showPlanned = document.getElementById('filter-planned').checked;
+                const showTempUnavail = document.getElementById('filter-temp-unavail').checked;
+                const showJ1772 = document.getElementById('filter-j1772').checked;
+                const showJ1772Combo = document.getElementById('filter-j1772combo').checked;
+                const showTesla = document.getElementById('filter-tesla').checked;
+                const showChademo = document.getElementById('filter-chademo').checked;
+                const showJ3271 = document.getElementById('filter-j3271').checked;
+                
+                // Filter stations based on current filter settings
+                const filteredFeatures = allData.features.filter(feature => {
+                    const props = feature.properties;
+                    
+                    // Check charging level
+                    const hasChargingLevel = (showDCFast && props.ev_dc_fast_num > 0) ||
+                                            (showLevel2 && props.ev_level2_evse_num > 0) ||
+                                            (showLevel1 && props.ev_level1_evse_num > 0);
+                    if (!hasChargingLevel) return false;
+                    
+                    // Check access type
+                    const accessCode = props.access_code || '';
+                    const hasAccess = (showPublic && accessCode === 'public') ||
+                                     (showPrivate && accessCode === 'private');
+                    if (!hasAccess) return false;
+                    
+                    // Check status
+                    const statusCode = props.status_code || '';
+                    const hasStatus = (showAvailable && statusCode === 'E') ||
+                                     (showPlanned && statusCode === 'P') ||
+                                     (showTempUnavail && statusCode === 'T');
+                    if (!hasStatus) return false;
+                    
+                    // Check connector types
+                    let connectorTypes = props.ev_connector_types;
+                    if (typeof connectorTypes === 'string') {
+                        try {
+                            connectorTypes = JSON.parse(connectorTypes);
+                        } catch (e) {
+                            connectorTypes = [];
+                        }
+                    }
+                    if (!Array.isArray(connectorTypes)) connectorTypes = [];
+                    
+                    const hasConnector = (showJ1772 && connectorTypes.includes('J1772')) ||
+                                        (showJ1772Combo && connectorTypes.includes('J1772COMBO')) ||
+                                        (showTesla && connectorTypes.includes('TESLA')) ||
+                                        (showChademo && connectorTypes.includes('CHADEMO')) ||
+                                        (showJ3271 && connectorTypes.includes('J3271'));
+                    
+                    return hasConnector;
+                });
+                
+                // Calculate distances and sort filtered stations
+                const stationsWithDistance = filteredFeatures.map(feature => {
+                    const [lng, lat] = feature.geometry.coordinates;
+                    const distance = calculateDistance(searchLat, searchLng, lat, lng);
+                    return {
+                        feature: feature,
+                        distance: distance
+                    };
+                }).sort((a, b) => a.distance - b.distance);
+                
+                // Get top 10 nearest filtered stations
+                const nearest10 = stationsWithDistance.slice(0, 10);
+                
+                // Display results
+                displayResults(nearest10, searchLat, searchLng);
+                
+                // Fly to search location
+                map.flyTo({
+                    center: [searchLng, searchLat],
+                    zoom: 11,
+                    essential: true
+                });
+                
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                alert('Error searching for location. Please try again.');
+            }
+        }
+        
+        // Display results in the panel
+        function displayResults(stations, searchLat, searchLng) {
+            const resultsPanel = document.getElementById('results-panel');
+            const resultsList = document.getElementById('results-list');
+            
+            resultsList.innerHTML = '';
+            
+            stations.forEach((station, index) => {
+                const props = station.feature.properties;
+                const [lng, lat] = station.feature.geometry.coordinates;
+                
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                resultItem.innerHTML = `
+                    <div class="station-name">${index + 1}. ${props.station_name || 'EV Charging Station'}</div>
+                    <div class="station-address">${props.street_address}, ${props.city}, ${props.state}</div>
+                    <div class="station-distance">${station.distance.toFixed(2)} miles away</div>
+                `;
+                
+                // Click to fly to station
+                resultItem.addEventListener('click', () => {
+                    map.flyTo({
+                        center: [lng, lat],
+                        zoom: 15,
+                        essential: true
+                    });
+                    
+                    // Show popup
+                    const statusText = props.status_code === 'E' ? 'Available' : 
+                                     props.status_code === 'P' ? 'Planned' : 
+                                     props.status_code === 'T' ? 'Temporarily Unavailable' : 'Unknown';
+                    
+                    let popupContent = `<h3>${props.station_name || 'EV Charging Station'}</h3>`;
+                    popupContent += `<div class="station-detail"><strong>Address:</strong> ${props.street_address}, ${props.city}, ${props.state} ${props.zip}</div>`;
+                    popupContent += `<div class="station-detail"><strong>Distance:</strong> ${station.distance.toFixed(2)} miles</div>`;
+                    popupContent += `<div class="station-detail"><strong>Status:</strong> ${statusText}</div>`;
+                    
+                    if (props.total_dc_fast_evse > 0) {
+                        popupContent += `<div class="station-detail"><strong>DC Fast:</strong> ${props.total_dc_fast_evse} EVSE</div>`;
+                    }
+                    if (props.total_level2_evse > 0) {
+                        popupContent += `<div class="station-detail"><strong>Level 2:</strong> ${props.total_level2_evse} EVSE</div>`;
+                    }
+                    
+                    new mapboxgl.Popup()
+                        .setLngLat([lng, lat])
+                        .setHTML(popupContent)
+                        .addTo(map);
+                });
+                
+                resultsList.appendChild(resultItem);
             });
             
-            // If we have more than MAX_STATIONS, sample them
-            let sampled;
-            if (stationsInBounds.length > MAX_STATIONS) {
-                // Use spatial sampling - divide into grid and take samples
-                const step = Math.ceil(stationsInBounds.length / MAX_STATIONS);
-                sampled = stationsInBounds.filter((_, index) => index % step === 0)
-                    .slice(0, MAX_STATIONS);
-            } else {
-                sampled = stationsInBounds;
-            }
-            
-            return {
-                type: 'FeatureCollection',
-                features: sampled
-            };
+            resultsPanel.classList.add('active');
         }
         
-        // Function to update the map data
-        function updateMapData() {
-            const visibleData = getVisibleStations();
-            if (visibleData && map.getSource('ev-stations')) {
-                map.getSource('ev-stations').setData(visibleData);
-                document.getElementById('station-count').textContent = 
-                    `${visibleData.features.length} of ${allStations.features.length} stations displayed`;
+        // Event listeners for search
+        document.getElementById('search-btn').addEventListener('click', searchNearestStations);
+        document.getElementById('location-btn').addEventListener('click', useCurrentLocation);
+        document.getElementById('location-search').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchNearestStations();
+            }
+        });
+        document.getElementById('close-results').addEventListener('click', () => {
+            document.getElementById('results-panel').classList.remove('active');
+            if (searchMarker) {
+                searchMarker.remove();
+                searchMarker = null;
+            }
+        });
+        
+        // Function to filter stations based on selected types
+        function filterStations() {
+            if (!allData) return;
+            
+            // Get charging level filters
+            const showDCFast = document.getElementById('filter-dc-fast').checked;
+            const showLevel2 = document.getElementById('filter-level2').checked;
+            const showLevel1 = document.getElementById('filter-level1').checked;
+            
+            // Get access type filters
+            const showPublic = document.getElementById('filter-public').checked;
+            const showPrivate = document.getElementById('filter-private').checked;
+            
+            // Get status filters
+            const showAvailable = document.getElementById('filter-available').checked;
+            const showPlanned = document.getElementById('filter-planned').checked;
+            const showTempUnavail = document.getElementById('filter-temp-unavail').checked;
+            
+            // Get connector type filters
+            const showJ1772 = document.getElementById('filter-j1772').checked;
+            const showJ1772Combo = document.getElementById('filter-j1772combo').checked;
+            const showTesla = document.getElementById('filter-tesla').checked;
+            const showChademo = document.getElementById('filter-chademo').checked;
+            const showJ3271 = document.getElementById('filter-j3271').checked;
+            
+            const filteredFeatures = allData.features.filter(feature => {
+                const props = feature.properties;
+                
+                // Check charging level
+                const hasChargingLevel = (showDCFast && props.ev_dc_fast_num > 0) ||
+                                        (showLevel2 && props.ev_level2_evse_num > 0) ||
+                                        (showLevel1 && props.ev_level1_evse_num > 0);
+                
+                if (!hasChargingLevel) return false;
+                
+                // Check access type
+                const accessCode = props.access_code || '';
+                const hasAccess = (showPublic && accessCode === 'public') ||
+                                 (showPrivate && accessCode === 'private');
+                
+                if (!hasAccess) return false;
+                
+                // Check status
+                const statusCode = props.status_code || '';
+                const hasStatus = (showAvailable && statusCode === 'E') ||
+                                 (showPlanned && statusCode === 'P') ||
+                                 (showTempUnavail && statusCode === 'T');
+                
+                if (!hasStatus) return false;
+                
+                // Check connector types
+                let connectorTypes = props.ev_connector_types;
+                if (typeof connectorTypes === 'string') {
+                    try {
+                        connectorTypes = JSON.parse(connectorTypes);
+                    } catch (e) {
+                        connectorTypes = [];
+                    }
+                }
+                if (!Array.isArray(connectorTypes)) connectorTypes = [];
+                
+                const hasConnector = (showJ1772 && connectorTypes.includes('J1772')) ||
+                                    (showJ1772Combo && connectorTypes.includes('J1772COMBO')) ||
+                                    (showTesla && connectorTypes.includes('TESLA')) ||
+                                    (showChademo && connectorTypes.includes('CHADEMO')) ||
+                                    (showJ3271 && connectorTypes.includes('J3271'));
+                
+                return hasConnector;
+            });
+            
+            const filteredData = {
+                type: 'FeatureCollection',
+                features: filteredFeatures
+            };
+            
+            // Update the map source
+            if (map.getSource('ev-stations')) {
+                map.getSource('ev-stations').setData(filteredData);
+            }
+            
+            // If there's an active search, update the distance list with new filters
+            if (lastSearchLocation) {
+                updateSearchResultsWithFilters(lastSearchLocation);
             }
         }
+        
+        // Update search results based on current filters
+        function updateSearchResultsWithFilters(searchLocation) {
+            // Get current filter settings
+            const showDCFast = document.getElementById('filter-dc-fast').checked;
+            const showLevel2 = document.getElementById('filter-level2').checked;
+            const showLevel1 = document.getElementById('filter-level1').checked;
+            const showPublic = document.getElementById('filter-public').checked;
+            const showPrivate = document.getElementById('filter-private').checked;
+            const showAvailable = document.getElementById('filter-available').checked;
+            const showPlanned = document.getElementById('filter-planned').checked;
+            const showTempUnavail = document.getElementById('filter-temp-unavail').checked;
+            const showJ1772 = document.getElementById('filter-j1772').checked;
+            const showJ1772Combo = document.getElementById('filter-j1772combo').checked;
+            const showTesla = document.getElementById('filter-tesla').checked;
+            const showChademo = document.getElementById('filter-chademo').checked;
+            const showJ3271 = document.getElementById('filter-j3271').checked;
+            
+            // Filter stations based on current filter settings
+            const filteredFeatures = allData.features.filter(feature => {
+                const props = feature.properties;
+                
+                // Check charging level
+                const hasChargingLevel = (showDCFast && props.ev_dc_fast_num > 0) ||
+                                        (showLevel2 && props.ev_level2_evse_num > 0) ||
+                                        (showLevel1 && props.ev_level1_evse_num > 0);
+                if (!hasChargingLevel) return false;
+                
+                // Check access type
+                const accessCode = props.access_code || '';
+                const hasAccess = (showPublic && accessCode === 'public') ||
+                                 (showPrivate && accessCode === 'private');
+                if (!hasAccess) return false;
+                
+                // Check status
+                const statusCode = props.status_code || '';
+                const hasStatus = (showAvailable && statusCode === 'E') ||
+                                 (showPlanned && statusCode === 'P') ||
+                                 (showTempUnavail && statusCode === 'T');
+                if (!hasStatus) return false;
+                
+                // Check connector types
+                let connectorTypes = props.ev_connector_types;
+                if (typeof connectorTypes === 'string') {
+                    try {
+                        connectorTypes = JSON.parse(connectorTypes);
+                    } catch (e) {
+                        connectorTypes = [];
+                    }
+                }
+                if (!Array.isArray(connectorTypes)) connectorTypes = [];
+                
+                const hasConnector = (showJ1772 && connectorTypes.includes('J1772')) ||
+                                    (showJ1772Combo && connectorTypes.includes('J1772COMBO')) ||
+                                    (showTesla && connectorTypes.includes('TESLA')) ||
+                                    (showChademo && connectorTypes.includes('CHADEMO')) ||
+                                    (showJ3271 && connectorTypes.includes('J3271'));
+                
+                return hasConnector;
+            });
+            
+            // Calculate distances and sort filtered stations
+            const stationsWithDistance = filteredFeatures.map(feature => {
+                const [lng, lat] = feature.geometry.coordinates;
+                const distance = calculateDistance(searchLocation.lat, searchLocation.lng, lat, lng);
+                return {
+                    feature: feature,
+                    distance: distance
+                };
+            }).sort((a, b) => a.distance - b.distance);
+            
+            // Get top 10 nearest filtered stations
+            const nearest10 = stationsWithDistance.slice(0, 10);
+            
+            // Display results
+            displayResults(nearest10, searchLocation.lat, searchLocation.lng);
+        }
+        
+        // Apply Filters button event listener
+        document.getElementById('apply-filters-btn').addEventListener('click', filterStations);
         
         map.on('load', () => {
-            console.log('Map loaded, fetching GeoJSON...');
-            document.getElementById('station-count').textContent = 'Fetching data...';
-            
             // Load the GeoJSON data
             fetch('assets/wa_ev_stations_full_units.geojson')
                 .then(response => {
-                    console.log('Fetch response:', response.ok, response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
-                    console.log('GeoJSON loaded, features:', data.features ? data.features.length : 'no features');
+                    allData = data;
                     
-                    if (!data || !data.features || !Array.isArray(data.features)) {
-                        throw new Error('Invalid GeoJSON data structure');
-                    }
-                    
-                    allStations = data;
-                    console.log('Stations stored, getting visible stations...');
-                    
-                    // Get initial visible stations
-                    const initialData = getVisibleStations();
-                    console.log('Initial visible stations:', initialData ? initialData.features.length : 'null');
-                    
-                    if (!initialData) {
-                        throw new Error('Failed to filter visible stations');
-                    }
-                    
-                    // Update station count
-                    document.getElementById('station-count').textContent = 
-                        `${initialData.features.length} of ${allStations.features.length} stations displayed`;
-                    
-                    console.log('Adding source to map...');
-                    // Add the data source with initial filtered data
+                    // Add the data source
                     map.addSource('ev-stations', {
                         type: 'geojson',
-                        data: initialData,
-                        cluster: true,
-                        clusterMaxZoom: 14,
-                        clusterRadius: 50
-                    });
-                    console.log('Source added successfully');
-                    
-                    // Add cluster circle layer
-                    map.addLayer({
-                        id: 'clusters',
-                        type: 'circle',
-                        source: 'ev-stations',
-                        filter: ['has', 'point_count'],
-                        paint: {
-                            'circle-color': [
-                                'step',
-                                ['get', 'point_count'],
-                                '#51bbd6',
-                                10,
-                                '#f1f075',
-                                30,
-                                '#f28cb1'
-                            ],
-                            'circle-radius': [
-                                'step',
-                                ['get', 'point_count'],
-                                20,
-                                10,
-                                30,
-                                30,
-                                40
-                            ]
-                        }
+                        data: data
                     });
                     
-                    // Add cluster count labels
-                    map.addLayer({
-                        id: 'cluster-count',
-                        type: 'symbol',
-                        source: 'ev-stations',
-                        filter: ['has', 'point_count'],
-                        layout: {
-                            'text-field': '{point_count_abbreviated}',
-                            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-                            'text-size': 12
-                        }
-                    });
-                    
-                    // Add individual points layer
+                    // Add individual points layer with color coding by charging level
                     map.addLayer({
                         id: 'unclustered-point',
                         type: 'circle',
                         source: 'ev-stations',
-                        filter: ['!', ['has', 'point_count']],
                         paint: {
-                            'circle-color': '#11b4da',
+                            'circle-color': [
+                                'case',
+                                ['>', ['coalesce', ['get', 'ev_dc_fast_num'], 0], 0], '#9333ea', // Purple for DC Fast
+                                ['>', ['coalesce', ['get', 'ev_level2_evse_num'], 0], 0], '#3b82f6', // Blue for Level 2
+                                ['>', ['coalesce', ['get', 'ev_level1_evse_num'], 0], 0], '#22c55e', // Green for Level 1
+                                '#94a3b8' // Gray fallback
+                            ],
                             'circle-radius': 8,
                             'circle-stroke-width': 2,
                             'circle-stroke-color': '#fff'
                         }
-                    });
-                    
-                    // Click event for clusters
-                    map.on('click', 'clusters', (e) => {
-                        const features = map.queryRenderedFeatures(e.point, {
-                            layers: ['clusters']
-                        });
-                        const clusterId = features[0].properties.cluster_id;
-                        map.getSource('ev-stations').getClusterExpansionZoom(
-                            clusterId,
-                            (err, zoom) => {
-                                if (err) return;
-                                
-                                map.easeTo({
-                                    center: features[0].geometry.coordinates,
-                                    zoom: zoom
-                                });
-                            }
-                        );
                     });
                     
                     // Click event for individual stations
@@ -285,28 +1020,51 @@
                             coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
                         }
                         
-                        // Create popup content
-                        let popupContent = `
-                            <h3>${props.station_name}</h3>
-                            <div class="station-detail"><strong>Address:</strong> ${props.street_address}, ${props.city}, ${props.state} ${props.zip}</div>
-                            <div class="station-detail"><strong>Status:</strong> ${props.status_code === 'E' ? 'Available' : 'Unknown'}</div>
-                            <div class="station-detail"><strong>Access:</strong> ${props.access_code}</div>
-                        `;
+                        // Create popup content for individual charging units
+                        let popupContent = '';
                         
+                        // Station name
+                        popupContent += `<h3>${props.station_name || 'EV Charging Station'}</h3>`;
+                        
+                        // Address
+                        popupContent += `<div class="station-detail"><strong>Address:</strong> ${props.street_address}, ${props.city}, ${props.state} ${props.zip}</div>`;
+                        
+                        // Status and Access
+                        const statusText = props.status_code === 'E' ? 'Available' : 
+                                         props.status_code === 'P' ? 'Planned' : 
+                                         props.status_code === 'T' ? 'Temporarily Unavailable' : 'Unknown';
+                        popupContent += `<div class="station-detail"><strong>Status:</strong> ${statusText}</div>`;
+                        popupContent += `<div class="station-detail"><strong>Access:</strong> ${props.access_code || 'Unknown'}</div>`;
+                        
+                        // Network information
                         if (props.ev_network && props.ev_network !== 'Non-Networked') {
                             popupContent += `<div class="station-detail"><strong>Network:</strong> ${props.ev_network}</div>`;
                         }
                         
-                        if (props.ev_level2_evse_num) {
-                            popupContent += `<div class="station-detail"><strong>Level 2 Ports:</strong> ${props.ev_level2_evse_num}</div>`;
+                        // Charging information
+                        if (props.ev_level1_evse_num > 0) {
+                            popupContent += `<div class="station-detail"><strong>Level 1:</strong> ${props.ev_level1_evse_num} EVSE</div>`;
                         }
                         
-                        if (props.ev_dc_fast_num) {
-                            popupContent += `<div class="station-detail"><strong>DC Fast Ports:</strong> ${props.ev_dc_fast_num}</div>`;
+                        if (props.ev_level2_evse_num > 0) {
+                            popupContent += `<div class="station-detail"><strong>Level 2:</strong> ${props.ev_level2_evse_num} EVSE</div>`;
                         }
                         
-                        if (props.ev_pricing) {
-                            popupContent += `<div class="station-detail"><strong>Pricing:</strong> ${props.ev_pricing}</div>`;
+                        if (props.ev_dc_fast_num > 0) {
+                            popupContent += `<div class="station-detail"><strong>DC Fast:</strong> ${props.ev_dc_fast_num} EVSE</div>`;
+                        }
+                        
+                        // Connector types
+                        if (props.ev_connector_types) {
+                            let connectors = props.ev_connector_types;
+                            if (typeof connectors === 'string') {
+                                try {
+                                    connectors = JSON.parse(connectors);
+                                } catch (e) {}
+                            }
+                            if (Array.isArray(connectors) && connectors.length > 0) {
+                                popupContent += `<div class="station-detail"><strong>Connectors:</strong> ${connectors.join(', ')}</div>`;
+                            }
                         }
                         
                         new mapboxgl.Popup()
@@ -316,12 +1074,6 @@
                     });
                     
                     // Change cursor on hover
-                    map.on('mouseenter', 'clusters', () => {
-                        map.getCanvas().style.cursor = 'pointer';
-                    });
-                    map.on('mouseleave', 'clusters', () => {
-                        map.getCanvas().style.cursor = '';
-                    });
                     map.on('mouseenter', 'unclustered-point', () => {
                         map.getCanvas().style.cursor = 'pointer';
                     });
@@ -331,14 +1083,9 @@
                 })
                 .catch(error => {
                     console.error('Error loading GeoJSON data:', error);
-                    document.getElementById('station-count').textContent = 
-                        `Error: ${error.message}`;
+                    alert(`Error loading stations: ${error.message}`);
                 });
         });
-        
-        // Update data when map moves or zooms
-        map.on('moveend', updateMapData);
-        map.on('zoomend', updateMapData);
         
         // Add navigation controls
         map.addControl(new mapboxgl.NavigationControl());
