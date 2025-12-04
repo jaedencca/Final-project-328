@@ -1,5 +1,6 @@
 const map = L.map("map").setView([47.6062, -122.3321], 10);
 
+
 // Replace with your Mapbox access token
 const MAPBOX_TOKEN = "pk.eyJ1IjoiamFlZGVuY2NhIiwiYSI6ImNtaGM4cDNxdDI3cHkya3B1emRxYzJuNWQifQ.GD3_Rhp6YQw5CkRSFClT0w";
 L.tileLayer(
@@ -12,6 +13,23 @@ L.tileLayer(
       'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
   }
 ).addTo(map);
+
+// DISABLE SCROLL ZOOM + OVERLAY SYSTEM
+map.scrollWheelZoom.disable();
+
+const overlay = document.getElementById('map-overlay');
+
+// When user clicks the overlay → enable map interaction
+overlay.addEventListener('click', () => {
+    overlay.style.display = 'none';
+    map.scrollWheelZoom.enable();
+});
+
+// When mouse leaves the map → disable scroll zoom + show overlay again
+map.on('mouseout', () => {
+    map.scrollWheelZoom.disable();
+    overlay.style.display = 'flex';
+});
 
 // Marker icons, only ev so far, NEED icons for others, just copy this format ...
 const evIcon = L.icon({
