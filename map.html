@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alternative Fuel Station Map</title>
+
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js"></script>
+
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: sans-serif;
+      }
+
+      #map {
+        height: 100vh;
+        width: 100%;
+      }
+
+      #filters {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        display: flex;
+        gap: 10px;
+        z-index: 10;
+      }
+
+      #filters button {
+        padding: 8px 14px;
+        border: none;
+        background: black;
+        border-radius: 6px;
+        cursor: pointer;
+        color:white;
+        font-size: 14px;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+      }
+
+      #filters button.active {
+        background: white;
+        color: black;
+      }
+
+      .mapboxgl-popup-content{
+        width: 300px;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+        font-size: 16px;
+      }
+
+
+      @media (max-width: 600px) {
+        #filters {
+          flex-wrap: wrap;
+          width: calc(100% - 30px);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="filters">
+      <button data-type="ev">EV</button>
+      <button data-type="hydrogen">Hydrogen</button>
+      <button data-type="biodiesel">Biodiesel</button>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

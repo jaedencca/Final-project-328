@@ -4,34 +4,102 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Alternative Fuel Stations</title>
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"
-    />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      #map {
-        height: 100vh;
-        width: 100%;
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div id="map"></div>
+    <!-- HERO SECTION -->
+    <header class="hero">
+      <nav class="navbar">
+        <h2 class="logo">EcoFuel</h2>
+        <ul class="nav-links">
+          <li><a href="/map.html">Map</a></li>
+          <li><a href="/about.html">About</a></li>
+        </ul>
+      </nav>
 
-    <script src="script.js"></script>
+      <div class="hero-content">
+        <h1>The Smartest Way to Locate Alternative Fuel Stations</h1>
+        <p>
+          Explore electric, hydrogen, biodiesel stations on our interactive map.
+          View real-time availability, filter by fuel type, detect your
+          location, and get instant routes to the closest station.
+        </p>
+        <a href="/map.html" class="btn">Open the Map</a>
+      </div>
+    </header>
+
+    <section class="how-it-works">
+      <h2>How EcoFuel Works</h2>
+
+      <div class="steps">
+        <div class="step">
+          <h3>1. Detect Your Location</h3>
+          <p>
+            Allow the tool to find your current position for accurate nearby
+            results.
+          </p>
+        </div>
+
+        <div class="step">
+          <h3>2. Filter Station Types</h3>
+          <p>Select from EV, Hydrogen or Biodiesel — only see what you need.</p>
+        </div>
+
+        <div class="step">
+          <h3>3. View on Interactive Map</h3>
+          <p>
+            Explore stations with live availability, pricing, and station
+            details.
+          </p>
+        </div>
+
+        <div class="step">
+          <h3>4. Navigate to the Closest Station</h3>
+          <p>Get a direct route from your location to the station instantly.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATIONS SECTION -->
+    <section id="stations" class="stations">
+      <h2>Available Fuel Types</h2>
+
+      <div class="cards">
+        <div class="card">
+          <img src="/assets/images/electric-charging.jpg" alt="EV Charging" />
+          <h3>Electric Charging</h3>
+          <p>Fast and ultra-fast chargers for all EVs.</p>
+        </div>
+
+        <div class="card">
+          <img src="/assets/images/hydrogen-fuel.png" alt="Hydrogen Station" />
+          <h3>Hydrogen Fuel</h3>
+          <p>Clean hydrogen fueling stations for modern vehicles.</p>
+        </div>
+
+        <div class="card">
+          <img src="/assets/images/biodiesel.jpg" alt="Biofuel Station" />
+          <h3>Biodiesel & Ethanol</h3>
+          <p>Sustainable biofuel options for greener travel.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- BENEFITS SECTION -->
+    <section id="benefits" class="benefits">
+      <h2>Why Choose Alternative Fuels?</h2>
+      <ul>
+        <li>Reduce carbon emissions</li>
+        <li>Lower fuel costs</li>
+        <li>Eco-friendly transportation</li>
+        <li>Government incentives & rebates</li>
+        <li>Future-ready fueling system</li>
+      </ul>
+    </section>
+
+    <!-- CONTACT SECTION -->
+    <footer class="footer">
+      <p>© 2025 EcoFuel. All rights reserved.</p>
+    </footer>
   </body>
 </html>

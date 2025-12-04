@@ -1,70 +1,156 @@
-const API_KEY = "Ioaw398mdAchulbDmmlaESbNv7PekHPPm87Mk1eG";
+mapboxgl.accessToken =
+  "pk.eyJ1IjoiamFlZGVuY2NhIiwiYSI6ImNtaGM4cDNxdDI3cHkya3B1emRxYzJuNWQifQ.GD3_Rhp6YQw5CkRSFClT0w";
 
-const map = L.map("map").setView([47.6062, -122.3321], 10);
-
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-}).addTo(map);
-
-const markers = L.markerClusterGroup();
-
-const evIcon = L.icon({
-  iconUrl: "/assets/charging-station.png",
-  iconSize: [35, 35],
-  iconAnchor: [17, 35],
-  popupAnchor: [0, -30],
+const map = new mapboxgl.Map({
+  container: "map",
+  style: "mapbox://styles/mapbox/streets-v12",
+  center: [-122.3321, 47.6062],
+  zoom: 10,
 });
 
-async function loadStations() {
-  try {
-    const response = await fetch(
-      `https://developer.nrel.gov/api/alt-fuel-stations/v1.json?fuel_type=ELEC&state=WA&api_key=${API_KEY}`
-    );
+map.addControl(new mapboxgl.NavigationControl());
 
-    const json = await response.json();
-    const stations = json.fuel_stations;
+const fuelLayers = {
+  ev: {
+    file: "/assets/wa_ev_stations_full_units.geojson",
+    icon: "/assets/charging-station.png",
+    color: "#00c776",
+  },
+  hydrogen: {
+    file: "/assets/wa_hydrogen_stations.geojson",
+    icon: "/assets/hydrogen-icon.png",
+    color: "#0077ff",
+  },
+  biodiesel: {
+    file: "/assets/wa_biodiesel_stations.geojson",
+    icon: "/assets/biodiesel-icon.png",
+    color: "#c7a000",
+  },
+};
 
-    stations.forEach((s) => {
-      if (!s.latitude || !s.longitude) return;
+// Preload icons first
+async function preloadIcons() {
+  const promises = Object.keys(fuelLayers).map((key) => {
+    const { icon } = fuelLayers[key];
 
-      const popupHTML = `
-        <b>${s.station_name}</b><br>
-        Fuel: Electric<br>
-        Connectors: ${s.ev_connector_types?.join(", ") || "N/A"}<br>
-        Level 1: ${s.ev_level1_evse_num || 0}<br>
-        Level 2: ${s.ev_level2_evse_num || 0}<br>
-        DC Fast: ${s.ev_dc_fast_num || 0}<br>
-        Address: ${s.street_address}, ${s.city}
-      `;
+    return new Promise((resolve, reject) => {
+      map.loadImage(icon, (err, image) => {
+        if (err) reject(err);
+        map.addImage(`icon-${key}`, image);
+        resolve();
+      });
+    });
+  });
 
-      const marker = L.marker([s.latitude, s.longitude], { icon: evIcon })
-        .bindPopup(popupHTML);
+  return Promise.all(promises);
+}
 
-      markers.addLayer(marker);
+// Load a single layer
+async function loadFuelLayer(type, cfg) {
+  const res = await fetch(cfg.file);
+  const geojson = await res.json();
+
+  map.addSource(type, {
+    type: "geojson",
+    data: geojson,
+    cluster: true,
+    clusterMaxZoom: 14,
+    clusterRadius: 45,
+  });
+
+  map.addLayer({
+    id: `${type}-clusters`,
+    type: "circle",
+    source: type,
+    filter: ["has", "point_count"],
+    paint: {
+      "circle-color": cfg.color,
+      "circle-radius": 26,
+    },
+  });
+
+  map.addLayer({
+    id: `${type}-cluster-count`,
+    type: "symbol",
+    source: type,
+    filter: ["has", "point_count"],
+    layout: {
+      "text-field": "{point_count_abbreviated}",
+      "text-size": 13,
+    },
+  });
+
+  map.addLayer({
+    id: `${type}-points`,
+    type: "symbol",
+    source: type,
+    filter: ["!", ["has", "point_count"]],
+    layout: {
+      "icon-image": `icon-${type}`,
+      "icon-size": 0.1,
+      "icon-allow-overlap": true,
+    },
+  });
+
+  // Popup
+  map.on("click", `${type}-points`, (e) => {
+    const p = e.features[0].properties;
+
+    new mapboxgl.Popup()
+      .setLngLat(e.features[0].geometry.coordinates)
+      .setHTML(
+        `
+        <b>${p.station_name || "Unknown Station"}</b><br>
+        <small>${p.street_address || "No address"}</small><br>
+        <small>${p.city || "No city"}</small><br>
+        <small>${p.state || "No state"}</small><br>
+        <small>${p.access_code || "No access code"}</small><br>
+      `
+      )
+      .addTo(map);
+  });
+
+  // Cluster expand
+  map.on("click", `${type}-clusters`, (e) => {
+    const clusterId = e.features[0].properties.cluster_id;
+    map.getSource(type).getClusterExpansionZoom(clusterId, (err, zoom) => {
+      if (err) return;
+      map.easeTo({
+        center: e.features[0].geometry.coordinates,
+        zoom,
+      });
+    });
+  });
+}
+
+map.on("load", async () => {
+  await preloadIcons();
+
+  for (const key in fuelLayers) {
+    await loadFuelLayer(key, fuelLayers[key]);
+  }
+});
+
+// Filter toggle
+document.querySelectorAll("#filters button").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const type = btn.dataset.type;
+
+    const layers = [
+      `${type}-clusters`,
+      `${type}-cluster-count`,
+      `${type}-points`,
+    ];
+
+    const currentVisibility =
+      map.getLayoutProperty(`${type}-points`, "visibility") || "visible";
+
+    const newVis = currentVisibility === "visible" ? "none" : "visible";
+
+    layers.forEach((layerId) => {
+      map.setLayoutProperty(layerId, "visibility", newVis);
     });
 
-    map.addLayer(markers);
-  } catch (error) {
-    console.error("Error loading stations:", error);
-  }
-}
-
-loadStations();
-
-map.locate({ setView: true, maxZoom: 14 });
-
-map.on("locationfound", (e) => {
-  L.marker(e.latlng).addTo(map).bindPopup("You are here");
+    btn.classList.toggle("active");
+  });
 });
-
-async function geocode(query) {
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=json&q=${query}`
-  );
-  const data = await res.json();
-  return data[0];
-}
-
-function isWithinRadius(userPoint, stationPoint, radiusMeters) {
-  return map.distance(userPoint, stationPoint) <= radiusMeters;
-}
