@@ -19,16 +19,10 @@ map.scrollWheelZoom.disable();
 
 const overlay = document.getElementById('map-overlay');
 
-// When user clicks the overlay → enable map interaction
-overlay.addEventListener('click', () => {
-    overlay.style.display = 'none';
-    map.scrollWheelZoom.enable();
-});
-
-// When mouse leaves the map → disable scroll zoom + show overlay again
-map.on('mouseout', () => {
-    map.scrollWheelZoom.disable();
-    overlay.style.display = 'flex';
+// When user clicks the overlay = enable map interaction
+  overlay.addEventListener('click', () => {
+  overlay.style.display = 'none';
+  map.scrollWheelZoom.enable();
 });
 
 // Marker icons, only ev so far, NEED icons for others, just copy this format ...
