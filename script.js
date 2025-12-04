@@ -1,26 +1,10 @@
 const API_KEY = "Ioaw398mdAchulbDmmlaESbNv7PekHPPm87Mk1eG";
 
-<<<<<<< HEAD
-const map = L.map("map").setView([47.6062, -122.3321], 10);
-
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-}).addTo(map);
-
-const markers = L.markerClusterGroup();
-
-const evIcon = L.icon({
-  iconUrl: "/assets/charging-station.png",
-  iconSize: [35, 35],
-  iconAnchor: [17, 35],
-  popupAnchor: [0, -30],
-=======
 const map = new mapboxgl.Map({
   container: "map",
   style: "mapbox://styles/jaedencca/cmirrmnb5002501sn6k914u71",
   center: [-122.3321, 47.6062],
   zoom: 10,
->>>>>>> 5fbf570 (Added custom map styling to map)
 });
 
 async function loadStations() {
