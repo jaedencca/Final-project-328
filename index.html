@@ -12,8 +12,9 @@
       <nav class="navbar">
         <h2 class="logo">EcoFuel</h2>
         <ul class="nav-links">
-          <li><a href="/map.html">Map</a></li>
-          <li><a href="/about.html">About</a></li>
+          <!-- ✅ use relative paths for GitHub Pages -->
+          <li><a href="map.html">Map</a></li>
+          <li><a href="about.html">About</a></li>
         </ul>
       </nav>
 
@@ -24,7 +25,8 @@
           interactive map. View real-time availability, filter by fuel type,
           detect your location, and get instant routes to the closest station.
         </p>
-        <a href="/map.html" class="btn">Open the Map</a>
+        <!-- ✅ fixed link -->
+        <a href="map.html" class="btn">Open the Map</a>
       </div>
     </header>
 
@@ -67,23 +69,25 @@
     <section id="stations" class="stations">
       <h2>Available Fuel Types</h2>
       <div class="cards">
+        <!-- ✅ fixed image paths (no leading /) -->
         <div class="card">
-          <img src="/assets/images/electric-fuel.jpg" alt="EV Charging" />
+          <img src="assets/images/electric-fuel.jpg" alt="EV Charging" />
           <h3>Electric Charging</h3>
           <p>Fast and ultra-fast chargers for all EVs.</p>
         </div>
         <div class="card">
-          <img src="/assets/images/hydrogen-fuel.jpg" alt="Hydrogen Station" />
+          <img src="assets/images/hydrogen-fuel.jpg" alt="Hydrogen Station" />
           <h3>Hydrogen Fuel</h3>
           <p>Clean hydrogen fueling stations for modern vehicles.</p>
         </div>
         <div class="card">
-          <img src="/assets/images/biodiesel-fuel.jpg" alt="Biofuel Station" />
+          <img src="assets/images/biodiesel-fuel.jpg" alt="Biofuel Station" />
           <h3>Biodiesel & Ethanol</h3>
           <p>Sustainable biofuel options for greener travel.</p>
         </div>
       </div>
     </section>
+
     <!-- BENEFITS SECTION -->
     <section id="benefits" class="benefits">
       <h2>Why Choose Alternative Fuels?</h2>
@@ -95,7 +99,10 @@
         <li>Future-ready fueling system</li>
       </ul>
     </section>
-    <!-- CONTACT SECTION -->
-    <footer class="footer"><p>© 2025 EcoFuel. All rights reserved.</p></footer>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <p>© 2025 EcoFuel. All rights reserved.</p>
+    </footer>
   </body>
 </html>
