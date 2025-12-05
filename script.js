@@ -3,9 +3,11 @@ const map = L.map("map").setView([47.6062, -122.3321], 10);
 // Replace with your Mapbox access token
 const MAPBOX_TOKEN = "pk.eyJ1IjoiamFlZGVuY2NhIiwiYSI6ImNtaGM4cDNxdDI3cHkya3B1emRxYzJuNWQifQ.GD3_Rhp6YQw5CkRSFClT0w";
 L.tileLayer(
-  `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`,
+  `https://api.mapbox.com/styles/v1/jaedencca/cmirrmnb5002501sn6k914u71/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`,
   {
     maxZoom: 19,
+    tileSize: 512,
+    zoomOffset: -1,
     attribution:
       'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
       '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
@@ -44,6 +46,8 @@ const fuelFiles = {
   HYDROGEN: "assets/wa_hydrogen_stations.geojson",
   BIODIESEL: "assets/wa_biodiesel_stations.geojson",
 };
+
+const LIME = '#32cd32';
 
 // Containers for layer groups and raw marker lists
 const layers = {};
@@ -165,13 +169,22 @@ async function loadAllFuelFiles() {
 loadAllFuelFiles();
 
 // UI elements
-const fuelSelect = document.getElementById('fuelSelect');
-const clearBtn = document.getElementById('clearBtn');
+const fuelButtons = {
+  EV: document.getElementById('btnEV'),
+  HYDROGEN: document.getElementById('btnHYDROGEN'),
+  BIODIESEL: document.getElementById('btnBIODIESEL'),
+};
 const locateBtn = document.getElementById('locateBtn');
 const geocodeBtn = document.getElementById('geocodeBtn');
 const addressInput = document.getElementById('addressInput');
 const sortBtn = document.getElementById('sortBtn');
 const resultsEl = document.getElementById('results');
+
+const fuelVisibility = {
+  EV: true,
+  HYDROGEN: true,
+  BIODIESEL: true,
+};
 
 function clearAllLayers() {
   for (const l of Object.values(layers)) {
@@ -179,25 +192,30 @@ function clearAllLayers() {
   }
 }
 
-function showLayersForFuel(fuel) {
+function updateLayerVisibility() {
   clearAllLayers();
-  if (fuel === 'ALL') {
-    for (const l of Object.values(layers)) map.addLayer(l);
-  } else if (layers[fuel]) {
-    map.addLayer(layers[fuel]);
+  for (const [fuel, visible] of Object.entries(fuelVisibility)) {
+    if (visible && layers[fuel]) map.addLayer(layers[fuel]);
   }
 }
 
-fuelSelect.addEventListener('change', (e) => {
-  showLayersForFuel(e.target.value);
-  resultsEl.innerHTML = '';
-});
+function setButtonState(fuel) {
+  const btn = fuelButtons[fuel];
+  if (btn) {
+    btn.classList.toggle('active', fuelVisibility[fuel]);
+    btn.setAttribute('aria-pressed', fuelVisibility[fuel] ? 'true' : 'false');
+  }
+}
 
-clearBtn.addEventListener('click', () => {
-  fuelSelect.value = 'ALL';
-  showLayersForFuel('ALL');
-  resultsEl.innerHTML = '';
-});
+for (const [fuel, btn] of Object.entries(fuelButtons)) {
+  setButtonState(fuel);
+  btn.addEventListener('click', () => {
+    fuelVisibility[fuel] = !fuelVisibility[fuel];
+    setButtonState(fuel);
+    updateLayerVisibility();
+    resultsEl.innerHTML = '';
+  });
+}
 
 // Geocode helper
 async function geocode(query) {
@@ -231,7 +249,14 @@ function setUserMarker(lat, lng, label = 'Your current location') {
     map.removeLayer(userMarker);
     userMarker = null;
   }
-  userMarker = L.marker([lat, lng], { title: label }).addTo(map);
+  userMarker = L.circleMarker([lat, lng], {
+    radius: 7,
+    color: LIME,
+    weight: 2,
+    fillColor: LIME,
+    fillOpacity: 0.9,
+    title: label,
+  }).addTo(map);
 }
 
 // Draw driving route on map using OSRM public demo server
@@ -252,20 +277,20 @@ async function showRoute(originLngLat, destLatLng) {
     clearRoute();
     routeLayer = L.layerGroup().addTo(map);
 
-    const line = L.polyline(coords, { color: '#1976d2', weight: 4, opacity: 0.85 });
+    const line = L.polyline(coords, { color: LIME, weight: 4, opacity: 0.85 });
     const start = L.circleMarker([originLngLat[1], originLngLat[0]], {
       radius: 6,
-      color: '#1976d2',
+      color: LIME,
       weight: 2,
-      fillColor: '#1976d2',
+      fillColor: LIME,
       fillOpacity: 0.9,
     }).bindTooltip('Start', { direction: 'top' });
 
     const end = L.circleMarker([destLatLng.lat, destLatLng.lng], {
       radius: 6,
-      color: '#43a047',
+      color: LIME,
       weight: 2,
-      fillColor: '#43a047',
+      fillColor: LIME,
       fillOpacity: 0.9,
     }).bindTooltip('Destination', { direction: 'top' });
 
@@ -287,12 +312,14 @@ function showSortedResults() {
     return;
   }
 
-  const selectedFuel = fuelSelect.value;
   let candidateMarkers = [];
-  if (selectedFuel === 'ALL') {
-    for (const arr of Object.values(markersByFuel)) candidateMarkers = candidateMarkers.concat(arr);
-  } else {
-    candidateMarkers = markersByFuel[selectedFuel] ? [...markersByFuel[selectedFuel]] : [];
+  const activeFuels = Object.entries(fuelVisibility).filter(([, v]) => v).map(([k]) => k);
+  if (activeFuels.length === 0) {
+    alert('Turn on at least one fuel type to sort nearby stations.');
+    return;
+  }
+  for (const fuel of activeFuels) {
+    if (markersByFuel[fuel]) candidateMarkers = candidateMarkers.concat(markersByFuel[fuel]);
   }
 
   const userPoint = turf.point([userLocation[0], userLocation[1]]); // [lng, lat]
@@ -403,7 +430,7 @@ geocodeBtn.addEventListener('click', async () => {
 });
 
 // Optional: initially show all layers once loaded (give a brief delay to allow async loads)
-setTimeout(() => showLayersForFuel('ALL'), 800);
+setTimeout(() => updateLayerVisibility(), 800);
 
 // show small locate marker when browser provides location via map.locate events
 map.locate({ setView: false, maxZoom: 14 });

@@ -58,8 +58,22 @@
       }
 
       .control-row input[type="text"] { flex: 1; padding: 6px 8px; }
-      .control-row select { flex: 1; padding: 6px 8px; }
       .control-row button { padding: 6px 8px; }
+
+      .toggle-btn {
+        flex: 1;
+        padding: 6px 8px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #f5f5f5;
+        cursor: pointer;
+      }
+
+      .toggle-btn.active {
+        background: #1976d2;
+        color: white;
+        border-color: #1976d2;
+      }
 
       #results {
         max-height: 260px;
@@ -78,13 +92,9 @@
     <div class="control-panel" id="controlPanel">
       <h3>Find alternative fuel stations</h3>
       <div class="control-row">
-        <select id="fuelSelect" aria-label="Select fuel type">
-          <option value="ALL">All fuel types</option>
-          <option value="EV">Electric (EV)</option>
-          <option value="HYDROGEN">Hydrogen</option>
-          <option value="BIODIESEL">Biodiesel</option>
-        </select>
-        <button id="clearBtn" title="Show all">All</button>
+        <button id="btnEV" class="toggle-btn" aria-pressed="true">EV</button>
+        <button id="btnHYDROGEN" class="toggle-btn" aria-pressed="true">Hydrogen</button>
+        <button id="btnBIODIESEL" class="toggle-btn" aria-pressed="true">Biodiesel</button>
       </div>
 
       <div class="control-row">
