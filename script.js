@@ -48,6 +48,8 @@ const fuelFiles = {
 // Containers for layer groups and raw marker lists
 const layers = {};
 const markersByFuel = {};
+let routeLayer = null; // holds current displayed route (polyline + markers)
+let userMarker = null; // current user/search location marker
 
 // initialize user location (as [lng, lat])
 let userLocation = null;
@@ -199,9 +201,83 @@ clearBtn.addEventListener('click', () => {
 
 // Geocode helper
 async function geocode(query) {
-  const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+  const params = new URLSearchParams({
+    format: 'json',
+    q: `${query}, Washington`, // bias query text to WA
+    countrycodes: 'us',
+    viewbox: '-124.848974,45.543541,-116.916071,49.002494', // WA bbox west,south,east,north
+    bounded: '1',
+    limit: '5',
+  });
+
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`);
   const data = await res.json();
-  return data[0];
+  if (!Array.isArray(data) || data.length === 0) return null;
+
+  const waMatch = data.find((d) => d.address && d.address.state === 'Washington');
+  return waMatch || data[0];
+}
+
+// Clear any existing route from the map
+function clearRoute() {
+  if (routeLayer) {
+    map.removeLayer(routeLayer);
+    routeLayer = null;
+  }
+}
+
+function setUserMarker(lat, lng, label = 'Your current location') {
+  if (userMarker) {
+    map.removeLayer(userMarker);
+    userMarker = null;
+  }
+  userMarker = L.marker([lat, lng], { title: label }).addTo(map);
+}
+
+// Draw driving route on map using OSRM public demo server
+async function showRoute(originLngLat, destLatLng) {
+  // originLngLat: [lng, lat]; destLatLng: {lat, lng}
+  if (!originLngLat || !destLatLng) return;
+
+  const url = `https://router.project-osrm.org/route/v1/driving/${originLngLat[0]},${originLngLat[1]};${destLatLng.lng},${destLatLng.lat}?overview=full&geometries=geojson`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Routing error ${res.status}`);
+    const data = await res.json();
+    if (!data.routes || !data.routes.length) throw new Error('No route found');
+
+    const coords = data.routes[0].geometry.coordinates.map(([lon, lat]) => [lat, lon]);
+
+    clearRoute();
+    routeLayer = L.layerGroup().addTo(map);
+
+    const line = L.polyline(coords, { color: '#1976d2', weight: 4, opacity: 0.85 });
+    const start = L.circleMarker([originLngLat[1], originLngLat[0]], {
+      radius: 6,
+      color: '#1976d2',
+      weight: 2,
+      fillColor: '#1976d2',
+      fillOpacity: 0.9,
+    }).bindTooltip('Start', { direction: 'top' });
+
+    const end = L.circleMarker([destLatLng.lat, destLatLng.lng], {
+      radius: 6,
+      color: '#43a047',
+      weight: 2,
+      fillColor: '#43a047',
+      fillOpacity: 0.9,
+    }).bindTooltip('Destination', { direction: 'top' });
+
+    routeLayer.addLayer(line);
+    routeLayer.addLayer(start);
+    routeLayer.addLayer(end);
+
+    map.fitBounds(line.getBounds(), { padding: [40, 40] });
+  } catch (err) {
+    console.error('Route fetch failed', err);
+    alert('Unable to draw directions right now. Please try again.');
+  }
 }
 
 // Bring up results sorted by distance for currently visible fuel selection
@@ -243,11 +319,33 @@ function showSortedResults() {
     const distText = `${(item.distanceKm).toFixed(2)} km`;
     const div = document.createElement('div');
     div.className = 'result-item';
-    div.innerHTML = `<strong>${name}</strong><div style="color:#666">${distText}</div>`;
+    const ll = item.marker.getLatLng();
+
+    // Click anywhere on the item to focus/open popup
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div>
+          <strong>${name}</strong>
+          <div style="color:#666">${distText}</div>
+        </div>
+        <button class="dir-btn" style="padding:4px 8px;font-size:12px;cursor:pointer;">Directions</button>
+      </div>
+    `;
+
     div.addEventListener('click', () => {
-      const ll = item.marker.getLatLng();
       map.setView(ll, 14);
       item.marker.openPopup();
+    });
+
+    // Directions button opens Google Maps from userLocation to station
+    const btn = div.querySelector('.dir-btn');
+    btn.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      if (!userLocation) {
+        alert('Set your location first (Use my location or enter an address).');
+        return;
+      }
+      await showRoute(userLocation, ll);
     });
     resultsEl.appendChild(div);
   });
@@ -265,8 +363,9 @@ locateBtn.addEventListener('click', () => {
   navigator.geolocation.getCurrentPosition((pos) => {
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
+    clearRoute();
     userLocation = [lng, lat];
-    L.marker([lat, lng]).addTo(map).bindPopup('Your current location').openPopup();
+    setUserMarker(lat, lng, 'Your current location');
     map.setView([lat, lng], 13);
     locateBtn.disabled = false;
     locateBtn.textContent = 'Use my location';
@@ -290,8 +389,9 @@ geocodeBtn.addEventListener('click', async () => {
     if (!r) return alert('Address not found');
     const lat = parseFloat(r.lat);
     const lon = parseFloat(r.lon);
+    clearRoute();
     userLocation = [lon, lat];
-    L.marker([lat, lon]).addTo(map).bindPopup('Search location').openPopup();
+    setUserMarker(lat, lon, 'Search location');
     map.setView([lat, lon], 13);
   } catch (err) {
     console.error(err);
@@ -310,7 +410,8 @@ map.locate({ setView: false, maxZoom: 14 });
 map.on('locationfound', (e) => {
   // only show if userLocation not set by UI
   if (!userLocation) {
+    clearRoute();
     userLocation = [e.latlng.lng, e.latlng.lat];
-    L.marker(e.latlng).addTo(map).bindPopup('Your current location');
+    setUserMarker(e.latlng.lat, e.latlng.lng, 'Your current location');
   }
 });
