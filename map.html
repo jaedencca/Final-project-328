@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alternative Fuel Stations</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"
+    />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+  <!-- turf.js for distance calculations -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      #map {
+        height: 100vh;
+        width: 100%;
+      }
+
+      /* Control panel styling */
+      .control-panel {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 12px;
+        border-radius: 8px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        z-index: 1000;
+        width: 260px;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      }
+
+      .control-panel h3 {
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .control-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .control-row input[type="text"] { flex: 1; padding: 6px 8px; }
+      .control-row select { flex: 1; padding: 6px 8px; }
+      .control-row button { padding: 6px 8px; }
+
+      #results {
+        max-height: 260px;
+        overflow: auto;
+        margin-top: 8px;
+        font-size: 13px;
+      }
+
+      .result-item { padding: 6px; border-bottom: 1px solid #eee; cursor: pointer; }
+      .result-item:hover { background: #f5f5f5; }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <div class="control-panel" id="controlPanel">
+      <h3>Find alternative fuel stations</h3>
+      <div class="control-row">
+        <select id="fuelSelect" aria-label="Select fuel type">
+          <option value="ALL">All fuel types</option>
+          <option value="EV">Electric (EV)</option>
+          <option value="HYDROGEN">Hydrogen</option>
+          <option value="BIODIESEL">Biodiesel</option>
+        </select>
+        <button id="clearBtn" title="Show all">All</button>
+      </div>
+
+      <div class="control-row">
+        <input type="text" id="addressInput" placeholder="Enter address (optional)" />
+        <button id="geocodeBtn">Find</button>
+      </div>
+
+      <div class="control-row">
+        <button id="locateBtn">Use my location</button>
+        <button id="sortBtn">Sort by distance</button>
+      </div>
+
+      <div id="results" aria-live="polite"></div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
