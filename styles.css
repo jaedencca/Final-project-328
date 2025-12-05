@@ -12,7 +12,7 @@ body {
 
 /* NAVBAR + HERO */
 .hero {
-  background: url("/assets/images/hero-background.jpg") center/cover no-repeat;
+  background: url("assets/images/hero-background.jpg") center/cover no-repeat;
   height: 100vh;
   color: white;
   position: relative;
