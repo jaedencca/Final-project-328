@@ -21,14 +21,21 @@ const evIcon = L.icon({
   popupAnchor: [0, -30],
 });
 
-const hydrogenIcon = L.divIcon({
-  html: '<div style="background:#2b9af3;width:18px;height:18px;border-radius:50%;border:3px solid white"></div>',
-  className: ''
+// Use provided PNG assets for hydrogen and biodiesel markers
+const hydrogenIcon = L.icon({
+  iconUrl: './assets/hydrogen-icon.png',
+  iconSize: [50, 50],
+  iconAnchor: [17, 35],
+  popupAnchor: [0, -30],
+  className: '',
 });
 
-const biodieselIcon = L.divIcon({
-  html: '<div style="background:#4caf50;width:18px;height:18px;border-radius:50%;border:3px solid white"></div>',
-  className: ''
+const biodieselIcon = L.icon({
+  iconUrl: './assets/biodiesel-icon.png',
+  iconSize: [50, 50],
+  iconAnchor: [17, 35],
+  popupAnchor: [0, -30],
+  className: '',
 });
 
 // Files in the assets folder
@@ -45,12 +52,70 @@ const markersByFuel = {};
 // initialize user location (as [lng, lat])
 let userLocation = null;
 
-// Helper: create popup content from feature properties
+// Helpers for popup content
+function formatAddress(props) {
+  const line1 = props.street_address || props.address;
+  const cityState = [props.city, props.state].filter(Boolean).join(', ');
+  const zip = props.zip;
+  const parts = [line1, [cityState, zip].filter(Boolean).join(' ')].filter(Boolean);
+  return parts.join('<br>');
+}
+
 function makePopupContent(props, fuelType) {
-  let content = `<b>${props.station_name || props.name || 'Station'}</b><br>`;
-  content += `<b>Fuel:</b> ${fuelType}<br>`;
-  if (props.address) content += `${props.address}<br>`;
-  if (props.city) content += `${props.city}, ${props.state || ''}<br>`;
+  const name = props.station_name || props.name || 'Station';
+  const address = formatAddress(props);
+  let content = `<b>${name}</b><br>`;
+  content += `<div><b>Fuel:</b> ${fuelType}</div>`;
+  if (address) content += `<div>${address}</div>`;
+
+  if (fuelType === 'EV') {
+    const connectors = Array.isArray(props.ev_connector_types)
+      ? props.ev_connector_types.join(', ')
+      : props.ev_connector_types || 'Not listed';
+    const level1 = props.ev_level1_evse_num ?? '0';
+    const level2 = props.ev_level2_evse_num ?? '0';
+    const dc = props.ev_dc_fast_num ?? '0';
+    const pricing = props.ev_pricing || 'Not listed';
+    const network = props.ev_network || 'Unknown network';
+    const status = props.status_code || 'Unknown status';
+
+    content += `<div><b>Network:</b> ${network}</div>`;
+    content += `<div><b>Status:</b> ${status}</div>`;
+    content += `<div><b>Connectors:</b> ${connectors}</div>`;
+    content += `<div><b>Level1/2/DC:</b> ${level1}/${level2}/${dc}</div>`;
+    content += `<div><b>Pricing:</b> ${pricing}</div>`;
+  } else if (fuelType === 'HYDROGEN') {
+    const pressure = props.hy_pressure || 'Not listed';
+    const vehicleClass = props.hy_vehicle_class || 'Not listed';
+    const stationStatus = props.hy_station_status || 'Unknown';
+    const isOpen = props.hy_is_open == null ? 'Unknown' : props.hy_is_open ? 'Yes' : 'No';
+    const access = props.access_code || 'Not listed';
+    const status = props.status_code || 'Unknown status';
+
+    content += `<div><b>Status:</b> ${status}</div>`;
+    content += `<div><b>Access:</b> ${access}</div>`;
+    content += `<div><b>Pressure:</b> ${pressure}</div>`;
+    content += `<div><b>Vehicle class:</b> ${vehicleClass}</div>`;
+    content += `<div><b>Open now:</b> ${isOpen}</div>`;
+    content += `<div><b>Station status:</b> ${stationStatus}</div>`;
+  } else if (fuelType === 'BIODIESEL') {
+    const blend = props.bd_blends || 'Not listed';
+    const cards = props.cards_accepted || 'Not listed';
+    const access = props.access_code || 'Not listed';
+    const status = props.status_code || 'Unknown status';
+
+    content += `<div><b>Status:</b> ${status}</div>`;
+    content += `<div><b>Access:</b> ${access}</div>`;
+    content += `<div><b>Blend:</b> ${blend}</div>`;
+    content += `<div><b>Cards accepted:</b> ${cards}</div>`;
+  } else {
+    // generic fallback
+    const access = props.access_code || 'Not listed';
+    const status = props.status_code || 'Unknown status';
+    content += `<div><b>Status:</b> ${status}</div>`;
+    content += `<div><b>Access:</b> ${access}</div>`;
+  }
+
   return content;
 }
 
