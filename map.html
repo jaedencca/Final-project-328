@@ -17,8 +17,10 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
-  <!-- turf.js for distance calculations -->
-  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <!-- turf.js for distance calculations -->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+    <link rel="stylesheet" href="styles.css" />
 
     <style>
       * {
@@ -31,10 +33,39 @@
         width: 100%;
       }
 
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      nav.navbar {
+        background: rgba(34, 74, 97, 0.4);
+        padding: 20px 50px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 2000;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      nav.navbar .logo {
+        color: white;
+      }
+
+      #map-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
       /* Control panel styling */
       .control-panel {
         position: absolute;
-        top: 12px;
+        top: 90px;
         left: 12px;
         background: rgba(255, 255, 255, 0.95);
         padding: 12px;
@@ -75,6 +106,12 @@
         border-color: #1976d2;
       }
 
+      /* Reposition Leaflet zoom controls below the control panel */
+      .leaflet-top.leaflet-left {
+        top: 360px !important;
+        left: 12px !important;
+      }
+
       #results {
         max-height: 260px;
         overflow: auto;
@@ -87,7 +124,18 @@
     </style>
   </head>
   <body>
-    <div id="map"></div>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+      <h2 class="logo">EcoFuel</h2>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="map.html">Map</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+    </nav>
+
+    <div id="map-container">
+      <div id="map"></div>
 
     <div class="control-panel" id="controlPanel">
       <h3>Find alternative fuel stations</h3>
@@ -108,6 +156,7 @@
       </div>
 
       <div id="results" aria-live="polite"></div>
+    </div>
     </div>
 
     <script src="script.js"></script>
