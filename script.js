@@ -1,7 +1,7 @@
 const map = L.map("map").setView([47.6062, -122.3321], 10);
 
 // Replace with your Mapbox access token
-const MAPBOX_TOKEN = "pk.eyJ1IjoiamFlZGVuY2NhIiwiYSI6ImNtaGM4cDNxdDI3cHkya3B1emRxYzJuNWQifQ.GD3_Rhp6YQw5CkRSFClT0w";
+const MAPBOX_TOKEN = "pk.eyJ1IjoibWFpa2hhbmh0IiwiYSI6ImNtaHllNDdidjBheXkya29mdHNzc3M1b2wifQ.F0AfMAmhk0OpXT6yqUE3Vw";
 L.tileLayer(
   `https://api.mapbox.com/styles/v1/jaedencca/cmirrmnb5002501sn6k914u71/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`,
   {
@@ -186,6 +186,70 @@ const fuelVisibility = {
   BIODIESEL: true,
 };
 
+// Car filter state
+const carFilter = {
+  enabled: false,
+  fuelType: null,
+  evConnectorType: null,
+  evChargingLevel: null,
+  hydrogenPressure: null,
+  biodieselBlend: null,
+};
+
+// Function to check if a station matches car specifications
+function stationMatchesCarFilter(feature, fuelType) {
+  if (!carFilter.enabled) return true;
+  if (carFilter.fuelType !== fuelType) return false;
+
+  const props = feature.properties || {};
+
+  if (fuelType === 'EV') {
+    // Check EV connector type
+    if (carFilter.evConnectorType) {
+      const connectorTypes = Array.isArray(props.ev_connector_types)
+        ? props.ev_connector_types.join(' ').toUpperCase()
+        : (props.ev_connector_types || '').toUpperCase();
+      
+      if (!connectorTypes.includes(carFilter.evConnectorType.toUpperCase())) {
+        return false;
+      }
+    }
+
+    // Check EV charging level
+    if (carFilter.evChargingLevel) {
+      const hasLevel1 = (props.ev_level1_evse_num ?? 0) > 0;
+      const hasLevel2 = (props.ev_level2_evse_num ?? 0) > 0;
+      const hasDCFast = (props.ev_dc_fast_num ?? 0) > 0;
+
+      if (carFilter.evChargingLevel === 'Level1' && !hasLevel1) return false;
+      if (carFilter.evChargingLevel === 'Level2' && !hasLevel2) return false;
+      if (carFilter.evChargingLevel === 'DCFast' && !hasDCFast) return false;
+    }
+
+    return true;
+  } else if (fuelType === 'HYDROGEN') {
+    // Check hydrogen pressure
+    if (carFilter.hydrogenPressure) {
+      const pressure = props.hy_pressure || '';
+      if (!pressure.includes(carFilter.hydrogenPressure)) {
+        return false;
+      }
+    }
+    return true;
+  } else if (fuelType === 'BIODIESEL') {
+    // Check biodiesel blend
+    if (carFilter.biodieselBlend) {
+      const blends = props.bd_blends || '';
+      if (!blends.includes(carFilter.biodieselBlend)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  return true;
+}
+
 function clearAllLayers() {
   for (const l of Object.values(layers)) {
     if (map.hasLayer(l)) map.removeLayer(l);
@@ -194,8 +258,30 @@ function clearAllLayers() {
 
 function updateLayerVisibility() {
   clearAllLayers();
-  for (const [fuel, visible] of Object.entries(fuelVisibility)) {
-    if (visible && layers[fuel]) map.addLayer(layers[fuel]);
+  
+  // If car filter is enabled, use filtered layers
+  if (carFilter.enabled) {
+    for (const [fuel, visible] of Object.entries(fuelVisibility)) {
+      if (!visible || !markersByFuel[fuel]) continue;
+
+      const cluster = L.markerClusterGroup();
+      
+      // Add only markers that match the car filter
+      markersByFuel[fuel].forEach(({ marker, feature }) => {
+        if (stationMatchesCarFilter(feature, fuel)) {
+          cluster.addLayer(marker);
+        }
+      });
+
+      if (cluster.getLayers().length > 0) {
+        map.addLayer(cluster);
+      }
+    }
+  } else {
+    // Show all layers normally
+    for (const [fuel, visible] of Object.entries(fuelVisibility)) {
+      if (visible && layers[fuel]) map.addLayer(layers[fuel]);
+    }
   }
 }
 
@@ -428,6 +514,119 @@ geocodeBtn.addEventListener('click', async () => {
     geocodeBtn.textContent = 'Find';
   }
 });
+
+// ============= CAR FILTER FUNCTIONALITY =============
+
+const useCarFilterCheckbox = document.getElementById('useCarFilter');
+const carFilterContent = document.getElementById('carFilterContent');
+const carFuelTypeSelect = document.getElementById('carFuelType');
+const evFilters = document.getElementById('evFilters');
+const hydrogenFilters = document.getElementById('hydrogenFilters');
+const biodieselFilters = document.getElementById('biodieselFilters');
+const evConnectorTypeSelect = document.getElementById('evConnectorType');
+const evChargingLevelSelect = document.getElementById('evChargingLevel');
+const hydrogenPressureSelect = document.getElementById('hydrogenPressure');
+const biodieselBlendSelect = document.getElementById('biodieselBlend');
+const applyCarFilterBtn = document.getElementById('applyCarFilter');
+const clearCarFilterBtn = document.getElementById('clearCarFilter');
+
+// Toggle car filter section visibility
+useCarFilterCheckbox.addEventListener('change', () => {
+  carFilterContent.style.display = useCarFilterCheckbox.checked ? 'block' : 'none';
+  if (!useCarFilterCheckbox.checked) {
+    carFilter.enabled = false;
+    updateLayerVisibility();
+    resultsEl.innerHTML = '';
+  }
+});
+
+// Update visible filter options based on selected fuel type
+carFuelTypeSelect.addEventListener('change', () => {
+  const selectedFuel = carFuelTypeSelect.value;
+  evFilters.style.display = selectedFuel === 'EV' ? 'block' : 'none';
+  hydrogenFilters.style.display = selectedFuel === 'HYDROGEN' ? 'block' : 'none';
+  biodieselFilters.style.display = selectedFuel === 'BIODIESEL' ? 'block' : 'none';
+});
+
+// Apply car filter
+applyCarFilterBtn.addEventListener('click', () => {
+  const selectedFuel = carFuelTypeSelect.value;
+  
+  if (!selectedFuel) {
+    alert('Please select a fuel type for your vehicle.');
+    return;
+  }
+
+  // Update car filter state
+  carFilter.enabled = true;
+  carFilter.fuelType = selectedFuel;
+  carFilter.evConnectorType = selectedFuel === 'EV' ? evConnectorTypeSelect.value : null;
+  carFilter.evChargingLevel = selectedFuel === 'EV' ? evChargingLevelSelect.value : null;
+  carFilter.hydrogenPressure = selectedFuel === 'HYDROGEN' ? hydrogenPressureSelect.value : null;
+  carFilter.biodieselBlend = selectedFuel === 'BIODIESEL' ? biodieselBlendSelect.value : null;
+
+  // Ensure only the selected fuel type is visible
+  fuelVisibility.EV = selectedFuel === 'EV';
+  fuelVisibility.HYDROGEN = selectedFuel === 'HYDROGEN';
+  fuelVisibility.BIODIESEL = selectedFuel === 'BIODIESEL';
+
+  // Update fuel buttons to reflect this
+  for (const [fuel, btn] of Object.entries(fuelButtons)) {
+    setButtonState(fuel);
+  }
+
+  // Update the map with filtered results
+  updateLayerVisibility();
+  resultsEl.innerHTML = '';
+  
+  // Show a summary message
+  let filterSummary = `Filtering ${selectedFuel}`;
+  if (selectedFuel === 'EV' && (carFilter.evConnectorType || carFilter.evChargingLevel)) {
+    const filters = [];
+    if (carFilter.evConnectorType) filters.push(`${carFilter.evConnectorType}`);
+    if (carFilter.evChargingLevel) filters.push(`${carFilter.evChargingLevel}`);
+    filterSummary += ` (${filters.join(', ')})`;
+  } else if (selectedFuel === 'HYDROGEN' && carFilter.hydrogenPressure) {
+    filterSummary += ` (${carFilter.hydrogenPressure} bar)`;
+  } else if (selectedFuel === 'BIODIESEL' && carFilter.biodieselBlend) {
+    filterSummary += ` (${carFilter.biodieselBlend})`;
+  }
+  
+  resultsEl.innerHTML = `<div style="padding: 8px; background: #e3f2fd; border-radius: 4px; margin-top: 8px;"><strong>✓ ${filterSummary}</strong></div>`;
+});
+
+// Clear car filter
+clearCarFilterBtn.addEventListener('click', () => {
+  carFilter.enabled = false;
+  carFilter.fuelType = null;
+  carFilter.evConnectorType = null;
+  carFilter.evChargingLevel = null;
+  carFilter.hydrogenPressure = null;
+  carFilter.biodieselBlend = null;
+
+  // Reset UI
+  useCarFilterCheckbox.checked = false;
+  carFilterContent.style.display = 'none';
+  carFuelTypeSelect.value = '';
+  evConnectorTypeSelect.value = '';
+  evChargingLevelSelect.value = '';
+  hydrogenPressureSelect.value = '';
+  biodieselBlendSelect.value = '';
+
+  // Reset visibility to show all fuel types
+  fuelVisibility.EV = true;
+  fuelVisibility.HYDROGEN = true;
+  fuelVisibility.BIODIESEL = true;
+
+  for (const [fuel, btn] of Object.entries(fuelButtons)) {
+    setButtonState(fuel);
+  }
+
+  updateLayerVisibility();
+  resultsEl.innerHTML = '';
+});
+
+// ============= END CAR FILTER FUNCTIONALITY =============
 
 // Optional: initially show all layers once loaded (give a brief delay to allow async loads)
 setTimeout(() => updateLayerVisibility(), 800);

@@ -145,6 +145,73 @@
         <button id="btnBIODIESEL" class="toggle-btn" aria-pressed="true">Biodiesel</button>
       </div>
 
+      <!-- Car Filter Section -->
+      <div id="carFilterSection" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #ddd;">
+        <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 8px;">
+          <input type="checkbox" id="useCarFilter" /> Filter by car specs
+        </label>
+        
+        <div id="carFilterContent" style="display: none;">
+          <div class="control-row">
+            <select id="carFuelType" style="flex: 1; padding: 6px 8px;">
+              <option value="">-- Select Fuel Type --</option>
+              <option value="EV">Electric (EV)</option>
+              <option value="HYDROGEN">Hydrogen</option>
+              <option value="BIODIESEL">Biodiesel</option>
+            </select>
+          </div>
+
+          <!-- EV-specific filters -->
+          <div id="evFilters" style="display: none;">
+            <div class="control-row">
+              <select id="evConnectorType" style="flex: 1; padding: 6px 8px;">
+                <option value="">-- Any Connector Type --</option>
+                <option value="NACS">NACS (Tesla)</option>
+                <option value="CCS">CCS (Combo)</option>
+                <option value="Level2">Level 2</option>
+                <option value="Level1">Level 1</option>
+                <option value="CHAdeMO">CHAdeMO</option>
+              </select>
+            </div>
+            <div class="control-row">
+              <select id="evChargingLevel" style="flex: 1; padding: 6px 8px;">
+                <option value="">-- Any Charging Level --</option>
+                <option value="Level1">Level 1 (120V)</option>
+                <option value="Level2">Level 2 (240V)</option>
+                <option value="DCFast">DC Fast Charging</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Hydrogen-specific filters -->
+          <div id="hydrogenFilters" style="display: none;">
+            <div class="control-row">
+              <select id="hydrogenPressure" style="flex: 1; padding: 6px 8px;">
+                <option value="">-- Any Pressure --</option>
+                <option value="350">350 bar</option>
+                <option value="700">700 bar</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Biodiesel-specific filters -->
+          <div id="biodieselFilters" style="display: none;">
+            <div class="control-row">
+              <select id="biodieselBlend" style="flex: 1; padding: 6px 8px;">
+                <option value="">-- Any Blend --</option>
+                <option value="B5">B5</option>
+                <option value="B10">B10</option>
+                <option value="B20">B20</option>
+                <option value="B100">B100 (Pure)</option>
+              </select>
+            </div>
+          </div>
+
+          <button id="applyCarFilter" style="width: 100%; padding: 8px; margin-top: 8px; background: #1976d2; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Apply Filter</button>
+          <button id="clearCarFilter" style="width: 100%; padding: 8px; margin-top: 4px; background: #f5f5f5; color: #333; border: 1px solid #ccc; border-radius: 6px; cursor: pointer;">Clear Filter</button>
+        </div>
+      </div>
+
       <div class="control-row">
         <input type="text" id="addressInput" placeholder="Enter address (optional)" />
         <button id="geocodeBtn">Find</button>
