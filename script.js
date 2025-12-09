@@ -2,7 +2,7 @@ const map = L.map("map").setView([47.6062, -122.3321], 10);
 
 
 // Replace with your Mapbox access token
-const MAPBOX_TOKEN = "pk.eyJ1IjoiamFlZGVuY2NhIiwiYSI6ImNtaGM4cDNxdDI3cHkya3B1emRxYzJuNWQifQ.GD3_Rhp6YQw5CkRSFClT0w";
+const MAPBOX_TOKEN = "pk.eyJ1IjoibWFpa2hhbmh0IiwiYSI6ImNtaHllNDdidjBheXkya29mdHNzc3M1b2wifQ.F0AfMAmhk0OpXT6yqUE3Vw";
 L.tileLayer(
   `https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`,
   {
