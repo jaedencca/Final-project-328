@@ -1,6 +1,6 @@
 # Alternative Fuel Station Locator  
 ### Final Project Checkpoint #1 — Project Proposal  
-**Group AB4:** Maikhanh T, Robbie Rivera, Naod Alemu, Jaeden Cox Arnsdorf, Malika Ali 
+**Group AB4:** Malika Ali , Maikhanh T, Robbie Rivera, Naod Alemu, Jaeden Cox Arnsdorf
 
 ---
 
